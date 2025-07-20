@@ -52,13 +52,19 @@ export default function AdminPage() {
 
   useEffect(() => {
     // 인증 확인
-    const auth = localStorage.getItem('adminAuth');
-    if (!auth) {
-      router.push('/admin/login');
-      return;
-    }
-    setIsAuthenticated(true);
-    fetchQuotes();
+    const checkAuth = () => {
+      if (typeof window !== 'undefined') {
+        const auth = localStorage.getItem('adminAuth');
+        if (!auth) {
+          router.push('/admin/login');
+          return;
+        }
+        setIsAuthenticated(true);
+        fetchQuotes();
+      }
+    };
+    
+    checkAuth();
   }, [router]);
 
   useEffect(() => {

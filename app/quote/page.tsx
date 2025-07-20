@@ -2,7 +2,7 @@
 
 import { useFormStatus, useFormState } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ function SubmitButton() {
   );
 }
 
-function QuoteForm() {
+function QuoteFormContent() {
     const searchParams = useSearchParams();
     const [state, formAction] = useFormState(createQuoteSupabase, null);
     
@@ -34,6 +34,8 @@ function QuoteForm() {
         const destination = searchParams.get('destination') || '';
         const duration = searchParams.get('duration') || '';
         const people = searchParams.get('people') || '';
+        
+        console.log('URL Parameters:', { destination, duration, people }); // 디버깅용
         
         setPrefilledData({
             destination,
@@ -57,6 +59,9 @@ function QuoteForm() {
                     defaultValue={prefilledData.destination}
                     required 
                   />
+                  {prefilledData.destination && (
+                    <p className="text-sm text-green-600">✓ 메인 페이지에서 자동 입력됨</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="airline">항공사</Label>
@@ -80,100 +85,114 @@ function QuoteForm() {
                   <Input type="number" name="children" placeholder="아동" />
                   <Input type="number" name="infants" placeholder="유아" />
                 </div>
+                {prefilledData.people && (
+                  <p className="text-sm text-green-600">✓ 참고: {prefilledData.people}</p>
+                )}
               </div>
             </div>
 
             {/* 세부 요청 섹션 */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">세부 요청</h3>
-              <div className="space-y-2">
-                <Label>선호하는 여행 스타일 (중복 선택 가능)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {["휴양", "관광", "골프", "액티비티", "쇼핑", "맛집탐방", "문화/역사", "자유여행"].map((style) => (
-                    <div key={style} className="flex items-center space-x-2">
-                      <input type="checkbox" id={style} name="travelStyle" value={style} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-                      <label htmlFor={style} className="text-sm text-gray-700">{style}</label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>예상 경비 (1인 기준)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                   {["100만원 이하", "100~150만원", "150~200만원", "200만원 이상"].map((budget) => (
-                    <div key={budget} className="flex items-center space-x-2">
-                      <input type="radio" id={budget} name="budget" value={budget} className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
-                      <label htmlFor={budget} className="text-sm text-gray-700">{budget}</label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="hotel">선호하는 호텔 또는 등급 (선택)</Label>
-                  <Input id="hotel" name="hotel" placeholder="예: 힐튼 호텔, 5성급 리조트" />
-              </div>
-            </div>
-            
-            {/* 요청자 정보 섹션 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">요청자 정보</h3>
+              <h3 className="text-lg font-semibold border-b pb-2">세부 요청사항</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name">요청자 성함</Label>
+                  <Label htmlFor="hotel">호텔 등급</Label>
+                  <Input id="hotel" name="hotel" placeholder="예: 3성급, 4성급, 5성급, 리조트" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="budget">예산</Label>
+                  <Input id="budget" name="budget" placeholder="예: 100만원, 200만원" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>여행 스타일 (복수 선택 가능)</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {['휴양', '관광', '쇼핑', '맛집', '액티비티', '문화체험', '자연', '사진촬영'].map((style) => (
+                    <label key={style} className="flex items-center space-x-2">
+                      <input type="checkbox" name="travel-style" value={style} />
+                      <span className="text-sm">{style}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="requests">추가 요청사항</Label>
+                <Textarea
+                  id="requests"
+                  name="requests"
+                  placeholder="특별한 요청사항이나 선호하는 일정이 있으시면 자유롭게 작성해주세요."
+                  rows={4}
+                />
+                {prefilledData.duration && (
+                  <p className="text-sm text-green-600">✓ 참고 여행기간: {prefilledData.duration}</p>
+                )}
+              </div>
+            </div>
+
+            {/* 연락처 정보 섹션 */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">연락처 정보</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">이름</Label>
                   <Input id="name" name="name" placeholder="홍길동" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">연락처</Label>
-                  <Input id="phone" name="phone" placeholder="010-1234-5678" required />
+                  <Input id="phone" name="phone" type="tel" placeholder="010-1234-5678" required />
                 </div>
               </div>
-               <div className="space-y-2">
-                  <Label htmlFor="email">이메일 주소 (선택)</Label>
-                  <Input id="email" name="email" type="email" placeholder="hello@example.com" />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">이메일 (선택)</Label>
+                <Input id="email" name="email" type="email" placeholder="example@email.com" />
+              </div>
             </div>
 
-             {/* 기타 요청사항 및 파일 첨부 */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">기타 요청 및 참고자료</h3>
-              <div className="space-y-2">
-                <Label htmlFor="requests">기타 요청사항</Label>
-                <Textarea id="requests" name="requests" placeholder="특별히 원하시는 활동이나 숙소, 식당 등이 있다면 자유롭게 작성해주세요." rows={5} />
+            {state?.error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-700">{state.error}</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="attachments">참고 자료 첨부</Label>
-                <Input id="attachments" name="attachments" type="file" multiple />
-                <p className="text-xs text-gray-500">
-                  이미지나 PDF 파일을 첨부할 수 있습니다. (최대 3개, 각 10MB 이하)
-                </p>
-              </div>
-            </div>
+            )}
 
             <SubmitButton />
         </form>
     );
 }
 
+function QuoteForm() {
+    return (
+        <Suspense fallback={<div>로딩 중...</div>}>
+            <QuoteFormContent />
+        </Suspense>
+    );
+}
 
-export default function QuoteFormPage() {
+export default function QuotePage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-3xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            맞춤 여행 견적 요청
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-           <div className="text-center mb-6">
-              <p className="text-gray-600">
-                아래 정보를 입력해주시면, 전문 가이드가 확인 후 맞춤 일정을
-                제안해드립니다.
-              </p>
-            </div>
-          <QuoteForm />
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4" style={{ color: "#3A3A3A" }}>
+              맞춤 여행 견적 요청
+            </h1>
+            <p className="text-xl text-gray-600">
+              자세한 정보를 입력해주시면 전문 가이드들이 맞춤 견적을 보내드립니다.
+            </p>
+          </div>
+          
+          <Card className="shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold text-center">
+                견적 요청서
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <QuoteForm />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 } 
