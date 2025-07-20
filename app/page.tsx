@@ -42,11 +42,14 @@ export default function TourGuiderHomepage() {
             </div>
           </div>
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="#" className="text-gray-600 hover:text-natural-green transition-colors">
-              여행 요청하기
+            <Link href="/about" className="text-gray-600 hover:text-natural-green transition-colors">
+              회사소개
             </Link>
-            <Link href="#" className="text-gray-600 hover:text-natural-green transition-colors">
-              가이드 찾기
+            <Link href="/quote" className="text-gray-600 hover:text-natural-green transition-colors">
+              견적 요청
+            </Link>
+            <Link href="/admin" className="text-gray-600 hover:text-natural-green transition-colors">
+              관리자
             </Link>
             <Link href="#" className="text-gray-600 hover:text-natural-green transition-colors">
               후기
