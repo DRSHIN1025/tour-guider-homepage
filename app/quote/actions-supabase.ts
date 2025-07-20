@@ -32,6 +32,7 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
     const { data, error } = await supabase
       .from('Quote')
       .insert({
+        id: crypto.randomUUID(), // Generate unique ID
         destination,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
@@ -51,13 +52,13 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
 
     if (error) {
       console.error('Supabase error:', error);
-      return;
+      return { error: 'Failed to create quote' };
     }
 
     console.log('Quote created successfully:', data);
   } catch (error) {
     console.error('Failed to create quote with Supabase:', error);
-    return;
+    return { error: 'Failed to create quote' };
   }
 
   // 3. Revalidate path and redirect
