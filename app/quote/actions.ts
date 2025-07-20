@@ -4,7 +4,14 @@ import { PrismaClient } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-const prisma = new PrismaClient();
+// Proper singleton pattern for serverless environments
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 // Add 'prevState' as the first argument to match useFormState signature
 async function createQuote(prevState: any, formData: FormData) {
