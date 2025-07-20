@@ -71,11 +71,30 @@ function QuoteFormContent() {
       const duration = searchParams.get('duration') || '';
       const people = searchParams.get('people') || '';
       
+      // 인원 정보 파싱
+      let adults = '2';
+      let children = '0';
+      let infants = '0';
+      
+      if (people) {
+        // "성인 10명, 아동 2명" 같은 형태에서 숫자 추출
+        const adultMatch = people.match(/성인\s*(\d+)/);
+        const childMatch = people.match(/아동\s*(\d+)/);
+        const infantMatch = people.match(/유아\s*(\d+)/);
+        
+        if (adultMatch) adults = adultMatch[1];
+        if (childMatch) children = childMatch[1];
+        if (infantMatch) infants = infantMatch[1];
+      }
+      
       if (destination || duration || people) {
         setFormData(prev => ({
           ...prev,
           destination,
-          // duration과 people은 참고용으로만 사용
+          adults,
+          children,
+          infants,
+          // duration은 참고용으로만 사용
         }));
       }
     }, [searchParams]);
@@ -253,7 +272,9 @@ function QuoteFormContent() {
                   </div>
                 </div>
                 {searchParams.get('people') && (
-                  <p className="text-sm text-green-600 mt-2">✓ 참고: {searchParams.get('people')}</p>
+                  <p className="text-sm text-green-600 mt-2">
+                    ✓ 메인 페이지에서 자동 입력됨: {searchParams.get('people')}
+                  </p>
                 )}
               </div>
             </div>
