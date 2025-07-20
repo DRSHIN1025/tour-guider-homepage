@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Quote {
@@ -26,8 +25,14 @@ model Quote {
   name        String
   phone       String
   email       String?
+  userId      String?  // 로그인한 사용자 ID
   requests    String?
   attachments String[]
+  status      String?  // pending, processing, completed, cancelled
+  notes       String?  // 관리자 메모
+  adminResponse String? // 관리자 응답 메시지
+  adminFiles    String[] // 관리자 첨부파일
+  responseDate  DateTime? // 관리자 응답 날짜
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

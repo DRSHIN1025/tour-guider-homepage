@@ -88,7 +88,6 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
         name,
         phone,
         email,
-        userId,
         requests,
         attachments: attachments,
         createdAt: new Date().toISOString(),
