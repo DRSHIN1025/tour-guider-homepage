@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { createQuote } from "./actions";
 
 export default function QuoteFormPage() {
   return (
@@ -15,7 +16,7 @@ export default function QuoteFormPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-8">
+          <form action={createQuote} className="space-y-8">
             <div className="text-center">
               <p className="text-gray-600">
                 아래 정보를 입력해주시면, 전문 가이드가 확인 후 맞춤 일정을
