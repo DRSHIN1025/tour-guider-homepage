@@ -50,18 +50,40 @@ export default function AdminPage() {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [sessionTimeLeft, setSessionTimeLeft] = useState<number>(30 * 60); // 30분
 
   useEffect(() => {
-    // 인증 확인
+    // 인증 확인 및 세션 관리
     const checkAuth = () => {
       if (typeof window !== 'undefined') {
         const auth = localStorage.getItem('adminAuth');
         const userInfo = localStorage.getItem('adminUser');
+        const sessionStart = localStorage.getItem('adminSessionStart');
         
-        if (!auth) {
+        if (!auth || !sessionStart) {
           router.push('/admin/login');
           return;
         }
+
+        // 세션 만료 체크 (30분)
+        const sessionStartTime = parseInt(sessionStart);
+        const currentTime = Date.now();
+        const sessionDuration = currentTime - sessionStartTime;
+        const maxSessionTime = 30 * 60 * 1000; // 30분
+
+        if (sessionDuration > maxSessionTime) {
+          // 세션 만료
+          localStorage.removeItem('adminAuth');
+          localStorage.removeItem('adminUser');
+          localStorage.removeItem('adminSessionStart');
+          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+          router.push('/admin/login');
+          return;
+        }
+
+        // 남은 세션 시간 계산
+        const timeLeft = Math.floor((maxSessionTime - sessionDuration) / 1000);
+        setSessionTimeLeft(timeLeft);
         
         if (userInfo) {
           try {
@@ -77,6 +99,24 @@ export default function AdminPage() {
     };
     
     checkAuth();
+
+    // 세션 타이머 (1초마다 업데이트)
+    const sessionTimer = setInterval(() => {
+      setSessionTimeLeft(prev => {
+        if (prev <= 1) {
+          // 세션 만료
+          localStorage.removeItem('adminAuth');
+          localStorage.removeItem('adminUser');
+          localStorage.removeItem('adminSessionStart');
+          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+          router.push('/admin/login');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(sessionTimer);
   }, [router]);
 
   useEffect(() => {
@@ -201,9 +241,25 @@ export default function AdminPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
-    localStorage.removeItem('adminUser');
-    router.push('/admin/login');
+    if (confirm('정말 로그아웃 하시겠습니까?')) {
+      // 로그아웃 로그
+      console.log('관리자 로그아웃:', {
+        username: adminUser?.username || 'unknown',
+        timestamp: new Date().toISOString(),
+        sessionId: adminUser?.sessionId || 'unknown'
+      });
+
+      localStorage.removeItem('adminAuth');
+      localStorage.removeItem('adminUser');
+      localStorage.removeItem('adminSessionStart');
+      router.push('/admin/login');
+    }
+  };
+
+  const formatSessionTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   if (!isAuthenticated) {
@@ -236,22 +292,31 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-4">
             {adminUser && (
-              <div className="flex items-center gap-3 text-sm">
-                {adminUser.profileImage && (
-                  <img 
-                    src={adminUser.profileImage} 
-                    alt="프로필" 
-                    className="w-8 h-8 rounded-full"
-                  />
-                )}
-                <div className="text-right">
-                  <p className="font-medium">{adminUser.nickname}</p>
-                  <p className="text-gray-500 text-xs">
-                    {adminUser.loginType === 'traditional' ? '관리자' : 
-                     adminUser.loginType === 'kakao' ? '카카오 로그인' :
-                     adminUser.loginType === 'naver' ? '네이버 로그인' :
-                     adminUser.loginType === 'google' ? '구글 로그인' : '소셜 로그인'}
+              <div className="flex items-center gap-4">
+                {/* 세션 정보 */}
+                <div className="text-right text-sm">
+                  <p className={`font-medium ${sessionTimeLeft < 300 ? 'text-red-600' : 'text-green-600'}`}>
+                    세션: {formatSessionTime(sessionTimeLeft)}
                   </p>
+                  <p className="text-xs text-gray-500">
+                    {sessionTimeLeft < 300 ? '곧 만료됩니다' : '정상'}
+                  </p>
+                </div>
+                
+                {/* 사용자 정보 */}
+                <div className="flex items-center gap-3 text-sm border-l pl-4">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                    <span className="text-red-600 font-bold text-xs">
+                      {adminUser.nickname?.charAt(0) || 'A'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{adminUser.nickname}</p>
+                    <p className="text-gray-500 text-xs flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      보안 로그인
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
