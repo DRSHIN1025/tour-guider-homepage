@@ -36,6 +36,7 @@ interface Quote {
   phone: string;
   email?: string;
   requests?: string;
+  attachments?: string[];
   status?: string;
   notes?: string;
 }
@@ -186,6 +187,57 @@ export default function AdminPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR');
+  };
+
+  const downloadAttachment = async (attachment: string) => {
+    try {
+      // Parse attachment data
+      const attachmentData = JSON.parse(attachment);
+      
+      // Get download URL from Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('attachments')
+        .download(attachmentData.filePath);
+      
+      if (error) {
+        console.error('Download error:', error);
+        alert('파일 다운로드에 실패했습니다.');
+        return;
+      }
+      
+      // Create blob URL and download
+      const blob = new Blob([data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachmentData.originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('File download error:', error);
+      alert('파일 다운로드 중 오류가 발생했습니다.');
+    }
+  };
+
+  const isValidAttachmentData = (attachment: string) => {
+    try {
+      const data = JSON.parse(attachment);
+      return data.originalName && data.filePath;
+    } catch {
+      return false;
+    }
+  };
+
+  const getAttachmentDisplayName = (attachment: string) => {
+    try {
+      const data = JSON.parse(attachment);
+      return data.originalName;
+    } catch {
+      return attachment; // Fallback to raw string
+    }
   };
 
   const getStatusBadge = (status?: string) => {
@@ -375,6 +427,7 @@ export default function AdminPage() {
                   <TableHead>여행기간</TableHead>
                   <TableHead>인원</TableHead>
                   <TableHead>예산</TableHead>
+                  <TableHead>첨부파일</TableHead>
                   <TableHead>액션</TableHead>
                 </TableRow>
               </TableHeader>
@@ -412,6 +465,15 @@ export default function AdminPage() {
                       {quote.infants > 0 && `, 유아 ${quote.infants}명`}
                     </TableCell>
                     <TableCell>{quote.budget || '-'}</TableCell>
+                    <TableCell>
+                      {quote.attachments && quote.attachments.length > 0 ? (
+                        <Badge variant="secondary" className="text-xs">
+                          {quote.attachments.length}개 파일
+                        </Badge>
+                      ) : (
+                        <span className="text-gray-400 text-xs">없음</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Dialog>
@@ -486,6 +548,55 @@ export default function AdminPage() {
                                     {selectedQuote.requests || '없음'}
                                   </p>
                                 </div>
+                                
+                                {selectedQuote.attachments && selectedQuote.attachments.length > 0 && (
+                                  <div>
+                                    <Label>첨부파일</Label>
+                                    <div className="mt-2 space-y-2">
+                                      {selectedQuote.attachments.map((attachment, index) => (
+                                        <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded border hover:bg-blue-100 transition-colors">
+                                          <div className="flex items-center space-x-3">
+                                            <Download className="w-4 h-4 text-blue-500" />
+                                            <div>
+                                              <span className="text-sm font-medium text-gray-700 block">
+                                                {getAttachmentDisplayName(attachment)}
+                                              </span>
+                                              {isValidAttachmentData(attachment) && (
+                                                <span className="text-xs text-gray-500">
+                                                  업로드됨: {new Date(JSON.parse(attachment).uploadedAt).toLocaleDateString('ko-KR')}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center space-x-2">
+                                            <Badge variant="secondary" className="text-xs">
+                                              첨부됨
+                                            </Badge>
+                                            {isValidAttachmentData(attachment) ? (
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => downloadAttachment(attachment)}
+                                                className="text-xs px-2 py-1 h-7"
+                                              >
+                                                <Download className="w-3 h-3 mr-1" />
+                                                다운로드
+                                              </Button>
+                                            ) : (
+                                              <Badge variant="destructive" className="text-xs">
+                                                다운로드 불가
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                      <p className="text-xs text-gray-500 mt-2">
+                                        💡 첨부파일은 고객이 제공한 견적 예시, 타사 견적서, 여행 일정표 등입니다. 다운로드 버튼을 클릭하여 파일을 저장하세요.
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                                
                                 <div>
                                   <Label>관리자 메모</Label>
                                   <Textarea 

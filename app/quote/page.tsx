@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { FileUpload } from "@/components/ui/file-upload";
 import { ChevronLeft, ChevronRight, Check, MapPin, Calendar, Users, Plane, Hotel, Heart, User } from "lucide-react";
 import { createQuoteSupabase } from "./actions-supabase";
 
@@ -64,6 +65,8 @@ function QuoteFormContent() {
       phone: '',
       email: ''
     });
+
+    const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
     useEffect(() => {
       // URL 파라미터에서 값 가져와서 초기값 설정
@@ -177,6 +180,12 @@ function QuoteFormContent() {
           formDataForSubmit.append(key, value as string);
         }
       });
+
+      // 첨부파일 추가
+      attachedFiles.forEach((file, index) => {
+        formDataForSubmit.append(`attachment-${index}`, file);
+      });
+      formDataForSubmit.append('attachmentCount', attachedFiles.length.toString());
 
       formAction(formDataForSubmit);
     };
@@ -339,6 +348,31 @@ function QuoteFormContent() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <Label className="text-lg font-semibold">견적 참고자료 첨부 (선택사항)</Label>
+                <p className="text-sm text-gray-600 mb-4">
+                  견적 예시, 타사 견적서, 여행 일정표, 참고 이미지 등을 첨부해주시면 더 정확한 견적을 제공할 수 있습니다.
+                </p>
+                <FileUpload
+                  onFilesChange={setAttachedFiles}
+                  maxFiles={5}
+                  maxSize={15}
+                  acceptedTypes={[
+                    'image/*', // 모든 이미지 파일
+                    'application/pdf', // PDF
+                    'application/msword', // DOC
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+                    'application/vnd.hancom.hwp', // HWP
+                    'application/haansofthwp', // HWP (다른 MIME 타입)
+                    '.hwp', '.hwpx', // HWP 확장자
+                    '.doc', '.docx', // Word 확장자
+                    '.pdf', // PDF 확장자
+                    '.txt', '.rtf', // 텍스트 파일
+                    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.tiff', '.ico' // 이미지 확장자
+                  ]}
+                />
               </div>
 
               <div>

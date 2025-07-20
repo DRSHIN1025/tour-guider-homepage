@@ -26,6 +26,47 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
   const phone = formData.get('phone') as string;
   const email = formData.get('email') as string;
   const requests = formData.get('requests') as string;
+  
+  // Handle file attachments
+  const attachmentCount = parseInt(formData.get('attachmentCount') as string) || 0;
+  const attachments: string[] = [];
+  
+  for (let i = 0; i < attachmentCount; i++) {
+    const file = formData.get(`attachment-${i}`) as File;
+    if (file) {
+      try {
+        // Generate unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `quote-attachments/${fileName}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error('File upload error:', uploadError);
+          // Fallback to filename only if upload fails
+          attachments.push(`${file.name} (${Math.round(file.size / 1024)}KB) - 업로드 실패`);
+        } else {
+          // Store the file path and original name
+          attachments.push(JSON.stringify({
+            originalName: file.name,
+            filePath: filePath,
+            size: file.size,
+            uploadedAt: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        console.error('File processing error:', error);
+        attachments.push(`${file.name} (${Math.round(file.size / 1024)}KB) - 처리 실패`);
+      }
+    }
+  }
 
   // 2. Save data using Supabase client directly
   try {
@@ -47,7 +88,7 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
         phone,
         email,
         requests,
-        attachments: [],
+        attachments: attachments,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
