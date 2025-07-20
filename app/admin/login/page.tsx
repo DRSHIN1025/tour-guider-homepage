@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import KakaoLogin from "@/components/KakaoLogin";
+import NaverLogin from "@/components/NaverLogin";
+import GoogleLogin from "@/components/GoogleLogin";
 
 export default function AdminLogin() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -32,18 +34,18 @@ export default function AdminLogin() {
     }
   };
 
-  const handleKakaoSuccess = (user: any) => {
-    // 카카오 로그인 성공 시 처리는 KakaoLogin 컴포넌트에서 이미 처리됨
-    console.log('카카오 로그인 성공:', user);
+  const handleSocialSuccess = (user: any) => {
+    console.log('소셜 로그인 성공:', user);
+    // 성공 처리는 각 컴포넌트에서 이미 처리됨
   };
 
-  const handleKakaoError = (error: any) => {
-    setError('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
-    console.error('카카오 로그인 오류:', error);
+  const handleSocialError = (error: any) => {
+    setError('소셜 로그인에 실패했습니다. 다시 시도해주세요.');
+    console.error('소셜 로그인 오류:', error);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">관리자 로그인</CardTitle>
@@ -51,13 +53,12 @@ export default function AdminLogin() {
             투어가이더 관리자 시스템에 로그인하세요
           </p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* 카카오 로그인 */}
+        <CardContent className="space-y-4">
+          {/* 소셜 로그인 버튼들 */}
           <div className="space-y-3">
-            <KakaoLogin onSuccess={handleKakaoSuccess} onError={handleKakaoError} />
-            <p className="text-xs text-center text-gray-500">
-              관리자 권한이 있는 카카오 계정으로 로그인하세요
-            </p>
+            <KakaoLogin onSuccess={handleSocialSuccess} onError={handleSocialError} />
+            <NaverLogin onSuccess={handleSocialSuccess} onError={handleSocialError} />
+            <GoogleLogin onSuccess={handleSocialSuccess} onError={handleSocialError} />
           </div>
 
           <div className="relative">
@@ -100,7 +101,7 @@ export default function AdminLogin() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h4 className="font-medium text-sm mb-2">💡 테스트 방법:</h4>
             <div className="text-xs text-gray-600 space-y-1">
-              <p><strong>카카오 로그인:</strong> 관리자 권한이 있는 카카오 계정 필요</p>
+              <p><strong>소셜 로그인:</strong> 현재 데모 모드로 바로 로그인됩니다</p>
               <p><strong>기존 로그인:</strong> admin / tourguider2024</p>
             </div>
           </div>

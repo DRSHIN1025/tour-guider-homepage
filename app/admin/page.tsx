@@ -247,7 +247,10 @@ export default function AdminPage() {
                 <div className="text-right">
                   <p className="font-medium">{adminUser.nickname}</p>
                   <p className="text-gray-500 text-xs">
-                    {adminUser.loginType === 'traditional' ? '관리자' : '카카오 로그인'}
+                    {adminUser.loginType === 'traditional' ? '관리자' : 
+                     adminUser.loginType === 'kakao' ? '카카오 로그인' :
+                     adminUser.loginType === 'naver' ? '네이버 로그인' :
+                     adminUser.loginType === 'google' ? '구글 로그인' : '소셜 로그인'}
                   </p>
                 </div>
               </div>

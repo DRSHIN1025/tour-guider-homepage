@@ -19,10 +19,23 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* 카카오 SDK */}
         <Script 
           src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" 
           integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" 
           crossOrigin="anonymous"
+          strategy="beforeInteractive"
+        />
+        
+        {/* 네이버 SDK */}
+        <Script 
+          src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" 
+          strategy="beforeInteractive"
+        />
+        
+        {/* 구글 SDK */}
+        <Script 
+          src="https://accounts.google.com/gsi/client" 
           strategy="beforeInteractive"
         />
       </head>
