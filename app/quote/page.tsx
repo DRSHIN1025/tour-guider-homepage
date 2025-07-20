@@ -1,6 +1,8 @@
 'use client';
 
 import { useFormStatus, useFormState } from 'react-dom';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,8 +20,27 @@ function SubmitButton() {
 }
 
 function QuoteForm() {
-    // This is for handling form state, e.g., showing success or error messages
+    const searchParams = useSearchParams();
     const [state, formAction] = useFormState(createQuoteSupabase, null);
+    
+    // URL 파라미터에서 값 가져오기
+    const [prefilledData, setPrefilledData] = useState({
+        destination: '',
+        duration: '',
+        people: ''
+    });
+
+    useEffect(() => {
+        const destination = searchParams.get('destination') || '';
+        const duration = searchParams.get('duration') || '';
+        const people = searchParams.get('people') || '';
+        
+        setPrefilledData({
+            destination,
+            duration,
+            people
+        });
+    }, [searchParams]);
 
     return (
         <form action={formAction} className="space-y-8">
@@ -29,7 +50,13 @@ function QuoteForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="destination">여행지</Label>
-                  <Input id="destination" name="destination" placeholder="예: 베트남 다낭" required />
+                  <Input 
+                    id="destination" 
+                    name="destination" 
+                    placeholder="예: 베트남 다낭" 
+                    defaultValue={prefilledData.destination}
+                    required 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="airline">항공사</Label>

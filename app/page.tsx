@@ -99,36 +99,48 @@ export default function TourGuiderHomepage() {
               className="bg-white p-8 lg:p-10 rounded-3xl shadow-2xl border max-w-4xl mx-auto"
               style={{ borderColor: "#E8E2D5" }}
             >
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold" style={{ color: "#3A3A3A" }}>
-                    여행지
-                  </label>
-                  <Input placeholder="베트남, 태국, 필리핀..." className="border-natural-beige py-4 text-lg" />
+              <form action="/quote" method="GET" className="space-y-6">
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold" style={{ color: "#3A3A3A" }}>
+                      여행지
+                    </label>
+                    <Input 
+                      name="destination"
+                      placeholder="베트남, 태국, 필리핀..." 
+                      className="border-natural-beige py-4 text-lg" 
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold" style={{ color: "#3A3A3A" }}>
+                      여행 기간
+                    </label>
+                    <Input 
+                      name="duration"
+                      placeholder="3박4일, 4박5일..." 
+                      className="border-natural-beige py-4 text-lg" 
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold" style={{ color: "#3A3A3A" }}>
+                      인원
+                    </label>
+                    <Input 
+                      name="people"
+                      placeholder="성인 2명, 아동 1명..." 
+                      className="border-natural-beige py-4 text-lg" 
+                    />
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold" style={{ color: "#3A3A3A" }}>
-                    여행 기간
-                  </label>
-                  <Input placeholder="언제 떠나시나요?" className="border-natural-beige py-4 text-lg" />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold" style={{ color: "#3A3A3A" }}>
-                    인원
-                  </label>
-                  <Input placeholder="몇 명이신가요?" className="border-natural-beige py-4 text-lg" />
-                </div>
-              </div>
-              <Button
-                asChild
-                className="w-full py-6 text-xl font-bold text-white rounded-2xl"
-                style={{ backgroundColor: "#2D5C4D" }}
-              >
-                <Link href="/quote">
+                <Button
+                  type="submit"
+                  className="w-full py-6 text-xl font-bold text-white rounded-2xl hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: "#2D5C4D" }}
+                >
                   맞춤 견적 요청하기
                   <ArrowRight className="ml-3 w-6 h-6" />
-                </Link>
-              </Button>
+                </Button>
+              </form>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-8 text-gray-600">
