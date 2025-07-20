@@ -41,6 +41,21 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `quote-attachments/${fileName}`;
         
+        // 먼저 버킷이 존재하는지 확인하고 없으면 생성
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const bucketExists = buckets?.some(bucket => bucket.name === 'attachments');
+        
+        if (!bucketExists) {
+          const { error: createBucketError } = await supabase.storage.createBucket('attachments', {
+            public: false,
+            allowedMimeTypes: ['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.hancom.hwp'],
+            fileSizeLimit: 15 * 1024 * 1024 // 15MB
+          });
+          if (createBucketError) {
+            console.log('Bucket creation info:', createBucketError);
+          }
+        }
+
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('attachments')
@@ -52,8 +67,9 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
         if (uploadError) {
           console.error('File upload error:', uploadError);
           // Fallback to filename only if upload fails
-          attachments.push(`${file.name} (${Math.round(file.size / 1024)}KB) - 업로드 실패`);
+          attachments.push(`${file.name} (${Math.round(file.size / 1024)}KB) - 업로드 실패: ${uploadError.message}`);
         } else {
+          console.log('File uploaded successfully:', filePath);
           // Store the file path and original name
           attachments.push(JSON.stringify({
             originalName: file.name,

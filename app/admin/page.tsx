@@ -202,6 +202,15 @@ export default function AdminPage() {
       // Parse attachment data
       const attachmentData = JSON.parse(attachment);
       
+      // 버킷 존재 확인
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'attachments');
+      
+      if (!bucketExists) {
+        alert('파일 저장소가 설정되지 않았습니다.');
+        return;
+      }
+      
       // Get download URL from Supabase Storage
       const { data, error } = await supabase.storage
         .from('attachments')
@@ -260,6 +269,21 @@ export default function AdminPage() {
       // 파일 업로드 처리
       const uploadedFiles: string[] = [];
       
+      // 관리자 응답 버킷 확인 및 생성
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'admin-responses');
+      
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase.storage.createBucket('admin-responses', {
+          public: false,
+          allowedMimeTypes: ['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+          fileSizeLimit: 20 * 1024 * 1024 // 20MB
+        });
+        if (createBucketError) {
+          console.log('Admin bucket creation info:', createBucketError);
+        }
+      }
+
       for (const file of responseFiles) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;

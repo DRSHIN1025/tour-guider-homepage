@@ -124,6 +124,15 @@ export default function CustomerDashboard() {
     try {
       const fileInfo = JSON.parse(fileData);
       
+      // 버킷 존재 확인
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'admin-responses');
+      
+      if (!bucketExists) {
+        alert('파일 저장소가 설정되지 않았습니다.');
+        return;
+      }
+      
       const { data, error } = await supabase.storage
         .from('admin-responses')
         .download(fileInfo.filePath);
