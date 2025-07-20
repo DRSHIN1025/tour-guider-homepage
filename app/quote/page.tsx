@@ -181,6 +181,17 @@ function QuoteFormContent() {
         }
       });
 
+      // 로그인한 사용자 정보 추가
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          formDataForSubmit.append('userId', user.id || user.email);
+        } catch (error) {
+          console.error('Failed to parse user data:', error);
+        }
+      }
+
       // 첨부파일 추가
       attachedFiles.forEach((file, index) => {
         formDataForSubmit.append(`attachment-${index}`, file);

@@ -25,6 +25,7 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
   const name = formData.get('name') as string;
   const phone = formData.get('phone') as string;
   const email = formData.get('email') as string;
+  const userId = formData.get('userId') as string; // 로그인한 사용자 ID
   const requests = formData.get('requests') as string;
   
   // Handle file attachments
@@ -87,6 +88,7 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
         name,
         phone,
         email,
+        userId,
         requests,
         attachments: attachments,
         createdAt: new Date().toISOString(),

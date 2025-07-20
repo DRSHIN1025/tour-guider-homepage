@@ -76,14 +76,24 @@ export function UserHeader() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleLogout}
-          className="border-gray-300 text-gray-600 hover:bg-gray-50"
-        >
-          로그아웃
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+          >
+            <Link href="/dashboard">마이페이지</Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="border-gray-300 text-gray-600 hover:bg-gray-50"
+          >
+            로그아웃
+          </Button>
+        </div>
       </div>
     );
   }

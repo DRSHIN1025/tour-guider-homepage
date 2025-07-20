@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Mail, Download, Eye, Edit, LogOut, Bell } from "lucide-react";
+import { Search, Mail, Download, Eye, Edit, LogOut, Bell, Send } from "lucide-react";
+import { FileUpload } from "@/components/ui/file-upload";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,6 +40,10 @@ interface Quote {
   attachments?: string[];
   status?: string;
   notes?: string;
+  userId?: string;
+  adminResponse?: string;
+  adminFiles?: string[];
+  responseDate?: string;
 }
 
 export default function AdminPage() {
@@ -49,6 +54,9 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [responseText, setResponseText] = useState('');
+  const [responseFiles, setResponseFiles] = useState<File[]>([]);
+  const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [sessionTimeLeft, setSessionTimeLeft] = useState<number>(30 * 60); // 30분
@@ -237,6 +245,66 @@ export default function AdminPage() {
       return data.originalName;
     } catch {
       return attachment; // Fallback to raw string
+    }
+  };
+
+  const submitAdminResponse = async (quoteId: string) => {
+    if (!responseText.trim() && responseFiles.length === 0) {
+      alert('응답 내용이나 파일을 추가해주세요.');
+      return;
+    }
+
+    setIsSubmittingResponse(true);
+
+    try {
+      // 파일 업로드 처리
+      const uploadedFiles: string[] = [];
+      
+      for (const file of responseFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `admin-responses/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('admin-responses')
+          .upload(filePath, file);
+        
+        if (uploadError) {
+          console.error('File upload error:', uploadError);
+        } else {
+          uploadedFiles.push(JSON.stringify({
+            originalName: file.name,
+            filePath: filePath,
+            uploadedAt: new Date().toISOString()
+          }));
+        }
+      }
+
+      // 견적 응답 업데이트
+      const { error } = await supabase
+        .from('Quote')
+        .update({
+          adminResponse: responseText.trim() || null,
+          adminFiles: uploadedFiles.length > 0 ? uploadedFiles : null,
+          responseDate: new Date().toISOString(),
+          status: 'completed'
+        })
+        .eq('id', quoteId);
+
+      if (error) {
+        console.error('Error updating quote:', error);
+        alert('응답 저장에 실패했습니다.');
+      } else {
+        alert('고객에게 견적이 전달되었습니다!');
+        setResponseText('');
+        setResponseFiles([]);
+        fetchQuotes(); // 목록 새로고침
+      }
+    } catch (error) {
+      console.error('Failed to submit response:', error);
+      alert('응답 전송 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmittingResponse(false);
     }
   };
 
@@ -604,6 +672,92 @@ export default function AdminPage() {
                                     defaultValue={selectedQuote.notes || ''}
                                     className="mt-1"
                                   />
+                                </div>
+
+                                {/* 관리자 응답 섹션 */}
+                                <div className="border-t pt-6">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <Label className="text-lg font-semibold">고객 응답 보내기</Label>
+                                    {selectedQuote.adminResponse && (
+                                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                                        응답완료
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  
+                                  {selectedQuote.adminResponse ? (
+                                    <div className="space-y-4">
+                                      <div className="p-4 bg-green-50 rounded-lg border">
+                                        <p className="text-sm text-gray-600 mb-2">이전 응답:</p>
+                                        <p className="whitespace-pre-wrap">{selectedQuote.adminResponse}</p>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                          전송일: {selectedQuote.responseDate ? new Date(selectedQuote.responseDate).toLocaleString('ko-KR') : '-'}
+                                        </p>
+                                      </div>
+                                      
+                                      {selectedQuote.adminFiles && selectedQuote.adminFiles.length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-medium mb-2">전송한 파일:</p>
+                                          <div className="space-y-2">
+                                            {selectedQuote.adminFiles.map((file, index) => (
+                                              <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded text-sm">
+                                                <Download className="w-4 h-4 text-gray-500" />
+                                                {JSON.parse(file).originalName}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : null}
+
+                                  <div className="space-y-4 mt-4">
+                                    <div>
+                                      <Label>견적 메시지</Label>
+                                      <Textarea
+                                        placeholder="고객에게 보낼 견적 내용을 작성하세요..."
+                                        value={responseText}
+                                        onChange={(e) => setResponseText(e.target.value)}
+                                        rows={4}
+                                        className="mt-1"
+                                      />
+                                    </div>
+                                    
+                                    <div>
+                                      <Label>견적서 및 일정표 첨부</Label>
+                                      <div className="mt-2">
+                                        <FileUpload
+                                          onFilesChange={setResponseFiles}
+                                          maxFiles={5}
+                                          maxSize={20}
+                                          acceptedTypes={[
+                                            'application/pdf',
+                                            'application/msword',
+                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                            'application/vnd.ms-excel',
+                                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                            'image/*',
+                                            '.pdf', '.doc', '.docx', '.xls', '.xlsx'
+                                          ]}
+                                        />
+                                      </div>
+                                    </div>
+                                    
+                                    <Button
+                                      onClick={() => submitAdminResponse(selectedQuote.id)}
+                                      disabled={isSubmittingResponse}
+                                      className="w-full"
+                                    >
+                                      {isSubmittingResponse ? (
+                                        <>처리 중...</>
+                                      ) : (
+                                        <>
+                                          <Send className="w-4 h-4 mr-2" />
+                                          고객에게 견적 전송
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             )}
