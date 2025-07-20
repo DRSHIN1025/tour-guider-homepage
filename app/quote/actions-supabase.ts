@@ -58,14 +58,14 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
     }
 
     console.log('Quote created successfully:', data);
+    
+    // 3. Revalidate path and return success
+    revalidatePath('/quote');
+    return { success: true, message: 'Quote created successfully' };
   } catch (error) {
     console.error('Failed to create quote with Supabase:', error);
     return { error: 'Failed to create quote' };
   }
-
-  // 3. Revalidate path and redirect
-  revalidatePath('/quote');
-  redirect('/quote/thank-you');
 }
 
 export { createQuoteSupabase }; 
