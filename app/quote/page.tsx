@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createQuote } from "./actions";
+import { createQuoteSupabase } from "./actions-supabase";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -19,7 +19,7 @@ function SubmitButton() {
 
 function QuoteForm() {
     // This is for handling form state, e.g., showing success or error messages
-    const [state, formAction] = useFormState(createQuote, null);
+    const [state, formAction] = useFormState(createQuoteSupabase, null);
 
     return (
         <form action={formAction} className="space-y-8">
