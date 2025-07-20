@@ -49,16 +49,28 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminUser, setAdminUser] = useState<any>(null);
 
   useEffect(() => {
     // 인증 확인
     const checkAuth = () => {
       if (typeof window !== 'undefined') {
         const auth = localStorage.getItem('adminAuth');
+        const userInfo = localStorage.getItem('adminUser');
+        
         if (!auth) {
           router.push('/admin/login');
           return;
         }
+        
+        if (userInfo) {
+          try {
+            setAdminUser(JSON.parse(userInfo));
+          } catch (e) {
+            console.error('사용자 정보 파싱 오류:', e);
+          }
+        }
+        
         setIsAuthenticated(true);
         fetchQuotes();
       }
@@ -190,6 +202,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
+    localStorage.removeItem('adminUser');
     router.push('/admin/login');
   };
 
@@ -221,18 +234,37 @@ export default function AdminPage() {
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">완료 {completedCount}</Badge>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={fetchQuotes} variant="outline">
-              새로고침
-            </Button>
-            <Button onClick={downloadExcel}>
-              <Download className="w-4 h-4 mr-2" />
-              엑셀 다운로드
-            </Button>
-            <Button onClick={handleLogout} variant="destructive">
-              <LogOut className="w-4 h-4 mr-2" />
-              로그아웃
-            </Button>
+          <div className="flex items-center gap-4">
+            {adminUser && (
+              <div className="flex items-center gap-3 text-sm">
+                {adminUser.profileImage && (
+                  <img 
+                    src={adminUser.profileImage} 
+                    alt="프로필" 
+                    className="w-8 h-8 rounded-full"
+                  />
+                )}
+                <div className="text-right">
+                  <p className="font-medium">{adminUser.nickname}</p>
+                  <p className="text-gray-500 text-xs">
+                    {adminUser.loginType === 'traditional' ? '관리자' : '카카오 로그인'}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button onClick={fetchQuotes} variant="outline">
+                새로고침
+              </Button>
+              <Button onClick={downloadExcel}>
+                <Download className="w-4 h-4 mr-2" />
+                엑셀 다운로드
+              </Button>
+              <Button onClick={handleLogout} variant="destructive">
+                <LogOut className="w-4 h-4 mr-2" />
+                로그아웃
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
