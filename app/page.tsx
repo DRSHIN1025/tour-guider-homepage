@@ -117,11 +117,14 @@ export default function TourGuiderHomepage() {
                 </div>
               </div>
               <Button
+                asChild
                 className="w-full py-6 text-xl font-bold text-white rounded-2xl"
                 style={{ backgroundColor: "#2D5C4D" }}
               >
-                맞춤 견적 요청하기
-                <ArrowRight className="ml-3 w-6 h-6" />
+                <Link href="/quote">
+                  맞춤 견적 요청하기
+                  <ArrowRight className="ml-3 w-6 h-6" />
+                </Link>
               </Button>
             </div>
 
