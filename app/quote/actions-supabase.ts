@@ -48,6 +48,8 @@ async function createQuoteSupabase(prevState: any, formData: FormData) {
         email,
         requests,
         attachments: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
     if (error) {
