@@ -1,11 +1,10 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client/edge';
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { PrismaClient } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-const prisma = new PrismaClient().$extends(withAccelerate());
+const prisma = new PrismaClient();
 
 // Add 'prevState' as the first argument to match useFormState signature
 async function createQuote(prevState: any, formData: FormData) {
