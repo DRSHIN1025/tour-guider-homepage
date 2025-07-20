@@ -233,7 +233,7 @@ export default function AdminPage() {
   const isValidAttachmentData = (attachment: string) => {
     try {
       const data = JSON.parse(attachment);
-      return data.originalName && data.filePath;
+      return data.originalName && data.filePath && !attachment.includes('업로드 실패') && !attachment.includes('처리 실패');
     } catch {
       return false;
     }
@@ -640,26 +640,33 @@ export default function AdminPage() {
                                             <Badge variant="secondary" className="text-xs">
                                               첨부됨
                                             </Badge>
-                                            {isValidAttachmentData(attachment) ? (
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => downloadAttachment(attachment)}
-                                                className="text-xs px-2 py-1 h-7"
-                                              >
-                                                <Download className="w-3 h-3 mr-1" />
-                                                다운로드
-                                              </Button>
-                                            ) : (
-                                              <Badge variant="destructive" className="text-xs">
-                                                다운로드 불가
-                                              </Badge>
-                                            )}
+                                                                                         {isValidAttachmentData(attachment) ? (
+                                               <Button
+                                                 size="sm"
+                                                 variant="outline"
+                                                 onClick={() => downloadAttachment(attachment)}
+                                                 className="text-xs px-2 py-1 h-7"
+                                               >
+                                                 <Download className="w-3 h-3 mr-1" />
+                                                 다운로드
+                                               </Button>
+                                             ) : (
+                                               <div className="flex flex-col items-end gap-1">
+                                                 <Badge variant="destructive" className="text-xs">
+                                                   다운로드 불가
+                                                 </Badge>
+                                                 <span className="text-xs text-gray-500">
+                                                   {attachment.includes('실패') ? '업로드 오류' : '파일명만 저장됨'}
+                                                 </span>
+                                               </div>
+                                             )}
                                           </div>
                                         </div>
                                       ))}
                                       <p className="text-xs text-gray-500 mt-2">
-                                        💡 첨부파일은 고객이 제공한 견적 예시, 타사 견적서, 여행 일정표 등입니다. 다운로드 버튼을 클릭하여 파일을 저장하세요.
+                                        💡 첨부파일은 고객이 제공한 견적 예시, 타사 견적서, 여행 일정표 등입니다. 
+                                        <br />
+                                        ⚠️ 현재 파일명만 저장되며, 실제 파일 다운로드를 위해서는 Supabase Storage 설정이 필요합니다.
                                       </p>
                                     </div>
                                   </div>
