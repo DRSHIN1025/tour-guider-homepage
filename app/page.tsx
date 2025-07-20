@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { UserHeader } from "@/components/UserHeader"
 
 export default function TourGuiderHomepage() {
   return (
@@ -61,12 +62,7 @@ export default function TourGuiderHomepage() {
               회사 소개
             </Link>
           </nav>
-          <Button
-            variant="outline"
-            className="border-natural-green text-natural-green hover:bg-natural-green hover:text-white bg-transparent"
-          >
-            로그인
-          </Button>
+          <UserHeader />
         </div>
       </header>
 
