@@ -54,6 +54,9 @@ export default function TourGuiderHomepage() {
             <Link href="#" className="text-gray-600 hover:text-natural-green transition-colors">
               고객센터
             </Link>
+            <Link href="/about" className="text-gray-600 hover:text-natural-green transition-colors">
+              회사 소개
+            </Link>
           </nav>
           <Button
             variant="outline"
