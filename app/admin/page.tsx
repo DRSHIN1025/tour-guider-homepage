@@ -169,6 +169,7 @@ export default function AdminPage() {
 
   const updateQuoteStatus = async (id: string, status: string) => {
     try {
+      // 먼저 status 컬럼이 있는지 확인하기 위해 테스트 업데이트
       const { error } = await supabase
         .from('Quote')
         .update({ status })
@@ -176,15 +177,30 @@ export default function AdminPage() {
 
       if (error) {
         console.error('Error updating status:', error);
+        
+        // status 컬럼이 없는 경우 임시로 로컬에서만 상태 관리
+        if (error.message.includes('column') || error.message.includes('status')) {
+          console.log('Status column does not exist, using local state only');
+          setQuotes(prev => prev.map(quote => 
+            quote.id === id ? { ...quote, status } : quote
+          ));
+          alert('⚠️ 임시로 로컬에서만 상태가 변경됩니다.\n페이지를 새로고침하면 원래 상태로 돌아갑니다.\n\n데이터베이스에 status 컬럼을 추가해야 합니다.');
+          return;
+        }
+        
+        alert(`상태 변경 실패: ${error.message}`);
         return;
       }
 
-      // 로컬 상태 업데이트
+      // 정상적으로 업데이트된 경우 로컬 상태도 업데이트
       setQuotes(prev => prev.map(quote => 
         quote.id === id ? { ...quote, status } : quote
       ));
+      
+      console.log(`Status updated successfully: ${id} -> ${status}`);
     } catch (error) {
       console.error('Failed to update status:', error);
+      alert('상태 변경 중 오류가 발생했습니다.');
     }
   };
 
