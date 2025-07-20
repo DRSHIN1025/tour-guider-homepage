@@ -7,7 +7,8 @@ import { redirect } from 'next/navigation';
 
 const prisma = new PrismaClient().$extends(withAccelerate());
 
-async function createQuote(formData: FormData) {
+// Add 'prevState' as the first argument to match useFormState signature
+async function createQuote(prevState: any, formData: FormData) {
   // 1. Get data from formData
   const destination = formData.get('destination') as string;
   const airline = formData.get('airline') as string;
