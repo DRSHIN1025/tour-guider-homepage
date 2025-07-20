@@ -1,6 +1,6 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -12,6 +12,7 @@ async function createQuote(prevState: any, formData: FormData) {
   // 1. Get data from formData
   const destination = formData.get('destination') as string;
   const airline = formData.get('airline') as string;
+  const hotel = formData.get('hotel') as string;
   const startDate = new Date(formData.get('start-date') as string);
   const endDate = new Date(formData.get('end-date') as string);
   const adults = parseInt(formData.get('adults') as string, 10);
@@ -37,6 +38,7 @@ async function createQuote(prevState: any, formData: FormData) {
         children,
         infants,
         airline,
+        hotel,
         travelStyle,
         budget,
         name,

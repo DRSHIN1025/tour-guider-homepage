@@ -81,6 +81,10 @@ function QuoteForm() {
                   ))}
                 </div>
               </div>
+              <div className="space-y-2">
+                  <Label htmlFor="hotel">선호하는 호텔 또는 등급 (선택)</Label>
+                  <Input id="hotel" name="hotel" placeholder="예: 힐튼 호텔, 5성급 리조트" />
+              </div>
             </div>
             
             {/* 요청자 정보 섹션 */}

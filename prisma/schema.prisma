@@ -24,6 +24,7 @@ model Quote {
   children          Int
   infants           Int
   airline           String?
+  hotel             String?
   travelStyle       String[]
   budget            String?
   name              String
