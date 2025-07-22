@@ -595,7 +595,24 @@ export default function QuotePage() {
             </p>
           </div>
           
-          <QuoteForm />
+          <Suspense fallback={
+            <Card className="shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold text-center">
+                  견적 요청서 로딩 중...
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </CardContent>
+            </Card>
+          }>
+            <QuoteForm />
+          </Suspense>
         </div>
       </div>
     </div>
