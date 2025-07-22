@@ -15,9 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Search, Mail, Download, Eye, Edit, LogOut, Bell, Send } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 
+// 빌드 시점 오류 방지를 위한 Supabase 클라이언트 초기화
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 );
 
 interface Quote {
@@ -149,6 +150,11 @@ export default function AdminPage() {
 
   const fetchQuotes = async () => {
     try {
+      if (!supabase) {
+        console.error('Supabase client not available');
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('Quote')
         .select('*')

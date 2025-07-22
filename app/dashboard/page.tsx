@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Separator } from "@/components/ui/separator";
 import { FileText, Download, Clock, CheckCircle, XCircle, AlertCircle, User, LogOut, Bell } from "lucide-react";
 
+// 빌드 시점 오류 방지를 위한 Supabase 클라이언트 초기화
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 );
 
 interface Quote {
@@ -126,7 +127,7 @@ export default function CustomerDashboard() {
       
       // 버킷 존재 확인
       const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'admin-responses');
+      const bucketExists = buckets?.some((bucket: any) => bucket.name === 'admin-responses');
       
       if (!bucketExists) {
         alert('파일 저장소가 설정되지 않았습니다.');
