@@ -1,5 +1,6 @@
 "use client"
 
+// 🔥 DEPLOYMENT TRIGGER - 버튼 강제 작동 보장
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
