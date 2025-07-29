@@ -525,7 +525,13 @@ export default function TourGuiderHomepage() {
                       전문 상담사와 직접 통화로<br />자세한 상담을 받아보세요
                     </p>
                   </div>
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl transition-colors" onClick={() => window.location.href = 'tel:1588-0000'}>
+                  <Button 
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl transition-colors" 
+                    onClick={() => {
+                      console.log('전화 버튼 클릭됨');
+                      window.location.href = 'tel:1588-0000';
+                    }}
+                  >
                     <Phone className="w-5 h-5 mr-2" />
                     1588-0000
                   </Button>
@@ -646,12 +652,22 @@ export default function TourGuiderHomepage() {
                 <div className="pt-4 space-y-3">
                   <Button 
                     className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-xl transition-colors"
-                    onClick={() => window.open('https://pf.kakao.com/_your_channel_id/chat', '_blank')}
+                    onClick={() => {
+                      console.log('푸터 카카오채널 버튼 클릭됨');
+                      window.open('https://pf.kakao.com/_your_channel_id/chat', '_blank');
+                    }}
                   >
                     <MessageCircle className="mr-2 w-4 h-4" />
                     카카오채널
                   </Button>
-                  <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 py-3 rounded-xl transition-colors" onClick={() => window.open('https://play.google.com/store/apps/details?id=com.tourguider.app', '_blank')}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 py-3 rounded-xl transition-colors" 
+                    onClick={() => {
+                      console.log('앱 다운로드 버튼 클릭됨');
+                      window.open('https://play.google.com/store/apps/details?id=com.tourguider.app', '_blank');
+                    }}
+                  >
                     <Download className="mr-2 w-4 h-4" />
                     앱 다운로드
                   </Button>

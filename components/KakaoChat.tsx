@@ -11,16 +11,22 @@ interface KakaoChatProps {
 
 export function KakaoChat({ channelId, className }: KakaoChatProps) {
   const handleKakaoChat = () => {
+    console.log('카카오톡 버튼 클릭됨');
+    
     // 기본 카카오톡 채팅 URL로 이동 (개발 중에는 기본 URL 사용)
     const defaultChatUrl = 'https://pf.kakao.com/_your_channel_id/chat'
     
     // 환경 변수가 있으면 사용, 없으면 기본 URL 사용
     const channelIdToUse = channelId || process.env.NEXT_PUBLIC_KAKAO_CHANNEL_ID
     
+    console.log('채널 ID:', channelIdToUse);
+    console.log('환경 변수 확인:', process.env.NEXT_PUBLIC_KAKAO_CHANNEL_ID);
+    
     if (channelIdToUse && channelIdToUse !== 'your_channel_id') {
       // 실제 채널 ID가 있으면 Kakao SDK 사용
       if (typeof window !== 'undefined' && window.Kakao) {
         try {
+          console.log('Kakao SDK 사용 시도');
           window.Kakao.Channel.chat({
             channelPublicId: channelIdToUse,
           })
@@ -30,10 +36,12 @@ export function KakaoChat({ channelId, className }: KakaoChatProps) {
         }
       } else {
         // Kakao SDK가 로드되지 않은 경우 기본 URL로 이동
+        console.log('Kakao SDK 없음, 기본 URL로 이동')
         window.open(defaultChatUrl, '_blank')
       }
     } else {
       // 환경 변수가 없거나 기본값인 경우 기본 URL로 이동
+      console.log('환경 변수 없음, 기본 URL로 이동')
       window.open(defaultChatUrl, '_blank')
     }
   }
