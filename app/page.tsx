@@ -46,7 +46,7 @@ export default function TourGuiderHomepage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50">
-      {/* Enhanced Header */}
+      {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -95,7 +95,7 @@ export default function TourGuiderHomepage() {
               여러 견적을 비교하고 가장 마음에 드는 여행을 선택하세요.
             </p>
             
-            {/* Enhanced Quote Form */}
+            {/* Quote Form */}
             <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-4xl mx-auto border border-white/20">
               <div className="grid md:grid-cols-4 gap-4 mb-6">
                 <div className="space-y-2">
@@ -164,206 +164,6 @@ export default function TourGuiderHomepage() {
               </div>
               <div className="text-lg opacity-90">안전한 여행 보장</div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
-              간단한 3단계로 완성되는 맞춤 여행
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              복잡한 여행 계획, 이제 전문 가이드에게 맡기세요
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="text-center">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-6">
-                <Calendar className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">1. 맞춤 여행 요청</h3>
-              <p className="text-gray-600 leading-relaxed">
-                여행지, 기간, 인원, 예산 등<br />
-                원하는 여행 조건을 알려주세요
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-6">
-                <Users className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">2. 현지 가이드 견적 제안</h3>
-              <p className="text-gray-600 leading-relaxed">
-                현지 전문 가이드들이<br />
-                맞춤 일정과 견적을 제안해드려요
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center mx-auto mb-6">
-                <Globe className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">3. 선택 후 출발</h3>
-              <p className="text-gray-600 leading-relaxed">
-                마음에 드는 일정을 선택하고<br />
-                안전하고 즐거운 여행을 떠나세요
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Reviews */}
-      <section className="py-24 bg-gradient-to-br from-gray-50 to-emerald-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
-              투어가이더와 함께한 특별한 여행
-            </h2>
-            <p className="text-xl text-gray-600">
-              실제 여행객들의 생생한 후기를 확인해보세요
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8">
-                <div className="flex items-center mb-4">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-current" />
-                    ))}
-                  </div>
-                  <span className="ml-2 text-2xl font-bold text-gray-800">5.0</span>
-                </div>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  "60대 부부 여행으로 걱정이 많았는데, 가이드님이 부모님을 정말 잘 챙겨주셔서 <strong>정말 편안한 여행이었어요.</strong> 숨은 맛집과 포토스팟까지 소개해주셔서 감사했습니다."
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-gray-800">김○○님</p>
-                    <p className="text-sm text-gray-500">베트남 다낭 4박5일</p>
-                  </div>
-                  <Heart className="w-6 h-6 text-red-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8">
-                <div className="flex items-center mb-4">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-current" />
-                    ))}
-                  </div>
-                  <span className="ml-2 text-2xl font-bold text-gray-800">5.0</span>
-                </div>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  "여러 가이드님들이 견적을 보내주셔서 비교할 수 있어서 좋았어요. <strong>가이드님이 부모님을 잘 챙겨주셨어요</strong> 태국 현지 문화까지 자세히 설명해주셨습니다."
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-gray-800">박○○님</p>
-                    <p className="text-sm text-gray-500">태국 방콕·파타야 5박6일</p>
-                  </div>
-                  <Heart className="w-6 h-6 text-red-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8">
-                <div className="flex items-center mb-4">
-                  <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-current" />
-                    ))}
-                  </div>
-                  <span className="ml-2 text-2xl font-bold text-gray-800">5.0</span>
-                </div>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  "혼자 필리핀 여행 계획 세우기 어려웠는데, 가이드님이 완벽한 일정을 짜주셨어요. <strong>정말 편안한 여행이었어요</strong> 중장년층 동남아 여행에 정말 추천해요!"
-                </p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-gray-800">이○○님</p>
-                    <p className="text-sm text-gray-500">필리핀 세부 3박4일</p>
-                  </div>
-                  <Heart className="w-6 h-6 text-red-400" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Target Audience */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
-              이런 분들을 위해 준비했습니다
-            </h2>
-            <p className="text-xl text-gray-600">
-              안전하고 편안한 동남아 여행을 원하시는 모든 분들께
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-            <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-0 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-6">
-                  <Users className="w-8 h-8 text-emerald-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4">혼자 여행하는 중년층</h3>
-                <p className="text-gray-600">
-                  안전하고 편안한<br />
-                  혼자만의 특별한 여행
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-0 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-6">
-                  <Heart className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4">부모님 모시고 가는 여행</h3>
-                <p className="text-gray-600">
-                  부모님 속도에 맞춘<br />
-                  편안한 효도 여행
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-0 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-6">
-                  <Users className="w-8 h-8 text-orange-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4">가족 여행</h3>
-                <p className="text-gray-600">
-                  온 가족이 함께하는<br />
-                  안전한 동남아 여행
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-6">
-                  <Calendar className="w-8 h-8 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4">바쁜 직장인</h3>
-                <p className="text-gray-600">
-                  계획 없이도 완벽한<br />
-                  스트레스 프리 여행
-                </p>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
@@ -459,7 +259,7 @@ export default function TourGuiderHomepage() {
         </div>
       </section>
 
-      {/* Enhanced Footer */}
+      {/* Footer */}
       <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-20">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
@@ -477,26 +277,6 @@ export default function TourGuiderHomepage() {
                 현지 가이드와 함께하는<br />
                 특별한 맞춤 여행의 새로운 기준
               </p>
-              <div className="flex space-x-4">
-                <div 
-                  className="w-10 h-10 bg-gray-700 hover:bg-emerald-600 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
-                  onClick={() => window.open('https://facebook.com/tourguider', '_blank')}
-                >
-                  <span className="text-sm">📘</span>
-                </div>
-                <div 
-                  className="w-10 h-10 bg-gray-700 hover:bg-emerald-600 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
-                  onClick={() => window.open('https://instagram.com/tourguider', '_blank')}
-                >
-                  <span className="text-sm">📷</span>
-                </div>
-                <div 
-                  className="w-10 h-10 bg-gray-700 hover:bg-emerald-600 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
-                  onClick={() => window.open('https://twitter.com/tourguider', '_blank')}
-                >
-                  <span className="text-sm">🐦</span>
-                </div>
-              </div>
             </div>
 
             <div className="space-y-4">
