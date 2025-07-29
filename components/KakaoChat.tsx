@@ -10,40 +10,48 @@ interface KakaoChatProps {
 }
 
 export function KakaoChat({ channelId, className }: KakaoChatProps) {
+  const handleKakaoChat = () => {
+    // 기본 카카오톡 채팅 URL로 이동 (개발 중에는 기본 URL 사용)
+    const defaultChatUrl = 'https://pf.kakao.com/_your_channel_id/chat'
+    
+    // 환경 변수가 있으면 사용, 없으면 기본 URL 사용
+    const channelIdToUse = channelId || process.env.NEXT_PUBLIC_KAKAO_CHANNEL_ID
+    
+    if (channelIdToUse && channelIdToUse !== 'your_channel_id') {
+      // 실제 채널 ID가 있으면 Kakao SDK 사용
+      if (typeof window !== 'undefined' && window.Kakao) {
+        try {
+          window.Kakao.Channel.chat({
+            channelPublicId: channelIdToUse,
+          })
+        } catch (error) {
+          console.log('Kakao SDK 오류, 기본 URL로 이동:', error)
+          window.open(defaultChatUrl, '_blank')
+        }
+      } else {
+        // Kakao SDK가 로드되지 않은 경우 기본 URL로 이동
+        window.open(defaultChatUrl, '_blank')
+      }
+    } else {
+      // 환경 변수가 없거나 기본값인 경우 기본 URL로 이동
+      window.open(defaultChatUrl, '_blank')
+    }
+  }
+
   useEffect(() => {
-    // Kakao SDK 로드
-    if (typeof window !== 'undefined' && !window.Kakao) {
+    // Kakao SDK 로드 (환경 변수가 있을 때만)
+    if (typeof window !== 'undefined' && !window.Kakao && process.env.NEXT_PUBLIC_KAKAO_APP_KEY) {
       const script = document.createElement('script')
       script.src = 'https://developers.kakao.com/sdk/js/kakao.js'
       script.async = true
       script.onload = () => {
         if (window.Kakao) {
-          window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_APP_KEY || 'test_key')
+          window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_APP_KEY)
         }
       }
       document.head.appendChild(script)
     }
   }, [])
-
-  const handleKakaoChat = () => {
-    // 기본 카카오톡 채팅 URL로 이동 (개발 중에는 기본 URL 사용)
-    const defaultChatUrl = 'https://pf.kakao.com/_your_channel_id/chat'
-    const channelIdToUse = channelId || process.env.NEXT_PUBLIC_KAKAO_CHANNEL_ID
-    
-    if (typeof window !== 'undefined' && window.Kakao && channelIdToUse) {
-      try {
-        window.Kakao.Channel.chat({
-          channelPublicId: channelIdToUse,
-        })
-      } catch (error) {
-        console.log('Kakao SDK 오류, 기본 URL로 이동:', error)
-        window.open(defaultChatUrl, '_blank')
-      }
-    } else {
-      // Kakao SDK가 로드되지 않은 경우 기본 URL로 이동
-      window.open(defaultChatUrl, '_blank')
-    }
-  }
 
   return (
     <Button

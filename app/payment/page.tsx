@@ -96,6 +96,15 @@ export default function PaymentPage() {
     setLoading(true)
 
     try {
+      // 환경 변수가 없으면 테스트 모드로 진행
+      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+        toast.success('개발 모드: 결제 시뮬레이션을 진행합니다.')
+        setTimeout(() => {
+          window.location.href = '/payment/success?session_id=test_session_' + Date.now()
+        }, 2000)
+        return
+      }
+
       const response = await fetch('/api/payment/checkout', {
         method: 'POST',
         headers: {
