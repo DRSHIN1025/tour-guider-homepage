@@ -1,110 +1,98 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-
-interface User {
-  id: string;
-  nickname: string;
-  email: string;
-  profileImage?: string;
-  loginType: string;
-}
+import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/useAuth"
+import { User, LogOut, Settings } from "lucide-react"
+import { AuthModal } from "./AuthModal"
+import { toast } from "sonner"
 
 export function UserHeader() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, loading, logout } = useAuth()
 
-  useEffect(() => {
-    const checkUserAuth = () => {
-      if (typeof window !== 'undefined') {
-        const userAuth = localStorage.getItem('userAuth');
-        const userData = localStorage.getItem('user');
-        
-        if (userAuth && userData) {
-          try {
-            const parsedUser = JSON.parse(userData);
-            setUser(parsedUser);
-            setIsLoggedIn(true);
-          } catch (e) {
-            console.error('사용자 정보 파싱 오류:', e);
-          }
-        }
+  const handleLogout = async () => {
+    try {
+      const result = await logout()
+      if (result.success) {
+        toast.success('로그아웃되었습니다.')
+      } else {
+        toast.error('로그아웃 중 오류가 발생했습니다.')
       }
-    };
+    } catch (error) {
+      toast.error('로그아웃 중 오류가 발생했습니다.')
+    }
+  }
 
-    checkUserAuth();
-    
-    // 로그인 상태 변경 감지를 위한 이벤트 리스너
-    const handleStorageChange = () => {
-      checkUserAuth();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('userAuth');
-    localStorage.removeItem('user');
-    setUser(null);
-    setIsLoggedIn(false);
-  };
-
-  if (isLoggedIn && user) {
+  if (loading) {
     return (
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3 text-sm">
-          {user.profileImage && (
-            <img 
-              src={user.profileImage} 
-              alt="프로필" 
-              className="w-8 h-8 rounded-full"
-            />
-          )}
-          <div className="text-right">
-            <p className="font-medium text-gray-700">{user.nickname}님</p>
+      <div className="flex items-center space-x-4">
+        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+        <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    )
+  }
+
+  if (user) {
+    return (
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+            {user.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full"
+              />
+            ) : (
+              <User className="w-4 h-4 text-emerald-600" />
+            )}
+          </div>
+          <div className="hidden md:block">
+            <p className="text-sm font-medium text-gray-700">
+              {user.displayName || user.email?.split('@')[0] || '사용자'}
+            </p>
             <p className="text-xs text-gray-500">
-              {user.loginType === 'email' ? '이메일' :
-               user.loginType === 'kakao' ? '카카오' :
-               user.loginType === 'naver' ? '네이버' :
-               user.loginType === 'google' ? '구글' : '소셜'} 로그인
+              {user.email}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        
+        <div className="flex items-center space-x-2">
           <Button
-            asChild
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            className="text-gray-600 hover:text-gray-800"
+            onClick={() => window.location.href = '/dashboard'}
           >
-            <Link href="/dashboard">마이페이지</Link>
+            <Settings className="w-4 h-4 mr-1" />
+            마이페이지
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className="border-gray-300 text-gray-600 hover:bg-gray-50"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
           >
+            <LogOut className="w-4 h-4 mr-1" />
             로그아웃
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <Button
-      asChild
-      variant="outline"
-      className="border-natural-green text-natural-green hover:bg-natural-green hover:text-white bg-transparent"
-    >
-      <Link href="/login">로그인</Link>
-    </Button>
-  );
+    <div className="flex items-center space-x-3">
+      <AuthModal mode="login">
+        <Button variant="outline" size="sm" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+          로그인
+        </Button>
+      </AuthModal>
+      
+      <AuthModal mode="signup">
+        <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white">
+          회원가입
+        </Button>
+      </AuthModal>
+    </div>
+  )
 } 
