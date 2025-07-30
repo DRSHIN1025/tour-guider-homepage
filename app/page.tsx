@@ -1,6 +1,8 @@
-"use client"
+'use client'
 
-// 🔥 DEPLOYMENT TRIGGER - 버튼 강제 작동 보장
+// 🚨 EMERGENCY DEPLOYMENT FIX - 2025-01-30 - FORCE CORRECT SITE DEPLOYMENT
+// The wrong website is deployed on tourguider.biz - this should fix it
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
