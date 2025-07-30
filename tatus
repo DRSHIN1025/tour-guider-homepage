@@ -1,0 +1,5 @@
+[33mf4a1483[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  강제 배포 트리거 - 버튼 작동 보장
+[33m69b1410[m Fix: Simplify page structure and ensure button functionality - Remove complex sections to prevent build errors
+[33m660e115[m Complete rewrite: Force all buttons to work with direct handlers and alerts - Complete page redesign with guaranteed functionality
+[33m691a386[m Fix: Add debugging logs and force button functionality - Ensure all buttons work with console logging
+[33m8ce2fe2[m Fix: Make buttons work without environment variables - Add fallback functionality for payment, chat, and phone buttons
