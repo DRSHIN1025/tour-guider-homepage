@@ -54,7 +54,10 @@ export default function QuotePage() {
     setLoading(true)
 
     try {
-      console.log('Firebase 연결 시도...', { db });
+      console.log('🔥 Firebase 연결 시도 시작...');
+      console.log('🔥 DB 객체 상태:', db);
+      console.log('🔥 Firebase 앱 상태:', db.app);
+      console.log('🔥 Firebase 프로젝트 ID:', db.app.options.projectId);
       
       const quoteData = {
         ...formData,
@@ -66,23 +69,40 @@ export default function QuotePage() {
         updatedAt: serverTimestamp()
       }
 
-      console.log('견적 요청 데이터:', quoteData);
-
-      const docRef = await addDoc(collection(db, 'quotes'), quoteData)
-      console.log('견적 요청 성공! 문서 ID:', docRef.id);
+      console.log('🔥 전송할 데이터:', quoteData);
+      console.log('🔥 Firestore 컬렉션 참조 생성 중...');
+      
+      const quotesCollection = collection(db, 'quotes');
+      console.log('🔥 컬렉션 참조 생성 완료:', quotesCollection);
+      
+      console.log('🔥 Firestore에 문서 추가 중...');
+      const docRef = await addDoc(quotesCollection, quoteData);
+      
+      console.log('🔥 ✅ 견적 요청 성공!');
+      console.log('🔥 ✅ 생성된 문서 ID:', docRef.id);
+      console.log('🔥 ✅ 문서 경로:', docRef.path);
       
       toast.success('견적 요청이 성공적으로 제출되었습니다!')
       setSubmitted(true)
     } catch (error) {
-      console.error('견적 요청 오류 상세:', error)
-      console.error('Firebase 설정:', { db });
+      console.error('🔥 ❌ 견적 요청 실패!');
+      console.error('🔥 ❌ 오류 타입:', typeof error);
+      console.error('🔥 ❌ 오류 객체:', error);
       
-      // 더 구체적인 오류 메시지
       if (error instanceof Error) {
-        toast.error(`견적 요청 중 오류가 발생했습니다: ${error.message}`)
+        console.error('🔥 ❌ 오류 메시지:', error.message);
+        console.error('🔥 ❌ 오류 스택:', error.stack);
+        toast.error(`견적 요청 실패: ${error.message}`)
       } else {
+        console.error('🔥 ❌ 알 수 없는 오류:', error);
         toast.error('견적 요청 중 알 수 없는 오류가 발생했습니다.')
       }
+      
+      // Firebase 연결 상태 재확인
+      console.log('🔥 ❌ Firebase 재확인:');
+      console.log('🔥 ❌ DB 상태:', db);
+      console.log('🔥 ❌ 앱 상태:', db?.app);
+      console.log('🔥 ❌ 프로젝트 ID:', db?.app?.options?.projectId);
     } finally {
       setLoading(false)
     }
