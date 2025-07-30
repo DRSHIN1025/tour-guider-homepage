@@ -4,15 +4,15 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 
-// Firebase 설정
+// Firebase 설정 - 환경변수 사용
 const firebaseConfig = {
-  apiKey: "AIzaSyCJfso0a1JKqny2Qgn9sXJgxaL0Gz57wno",
-  authDomain: "tour-guider-homepage.firebaseapp.com",
-  projectId: "tour-guider-homepage",
-  storageBucket: "tour-guider-homepage.firebasestorage.app",
-  messagingSenderId: "879427263594",
-  appId: "1:879427263594:web:d43e9b06e0536e8a687e13",
-  measurementId: "G-PT0Z1K0EWK"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ''
 };
 
 // Firebase 앱 초기화
