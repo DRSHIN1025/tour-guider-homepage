@@ -1,3 +1,4 @@
+    // Vercel 재배포를 위한 강제 트리거
 'use client'
 
 // 🚨 EMERGENCY DEPLOYMENT FIX - 2025-01-30 - FORCE CORRECT SITE DEPLOYMENT
