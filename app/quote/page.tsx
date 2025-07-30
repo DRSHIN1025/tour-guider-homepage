@@ -181,10 +181,13 @@ export default function QuotePage() {
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     이름 <span className="text-red-500">*</span>
                   </label>
                   <Input
+                    id="name"
+                    name="name"
+                    autoComplete="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="홍길동"
@@ -193,10 +196,14 @@ export default function QuotePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                     연락처 <span className="text-red-500">*</span>
                   </label>
                   <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     placeholder="010-1234-5678"
@@ -206,11 +213,14 @@ export default function QuotePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   이메일 (선택)
                 </label>
                 <Input
+                  id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="example@email.com"
@@ -233,13 +243,13 @@ export default function QuotePage() {
                 </div>
               </div>
 
-              {/* Hidden fields for travel data */}
-              <input type="hidden" value={formData.destination} />
-              <input type="hidden" value={formData.duration} />
-              <input type="hidden" value={formData.people} />
-              <input type="hidden" value={formData.budget} />
-              <input type="hidden" value={formData.travelDate} />
-              <input type="hidden" value={formData.specialRequests} />
+              {/* Hidden fields for travel data with proper attributes */}
+              <input type="hidden" name="destination" value={formData.destination} />
+              <input type="hidden" name="duration" value={formData.duration} />
+              <input type="hidden" name="people" value={formData.people} />
+              <input type="hidden" name="budget" value={formData.budget} />
+              <input type="hidden" name="travelDate" value={formData.travelDate} />
+              <input type="hidden" name="specialRequests" value={formData.specialRequests} />
 
               <div className="flex justify-between pt-6">
                 <Link href="/">
