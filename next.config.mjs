@@ -12,8 +12,9 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    domains: ['tourguider.com'],
+    // Firebase와 호환되도록 CSP 완화
+    contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none';",
+    domains: ['tourguider.com', 'firebasestorage.googleapis.com'],
   },
 
   // 압축 설정
@@ -28,7 +29,7 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
 
-  // 헤더 설정 (보안 및 성능)
+  // 헤더 설정 (보안 및 성능) - Firebase 호환성을 위해 CSP 추가
   async headers() {
     return [
       {
@@ -53,6 +54,10 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com; connect-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; frame-src https://*.firebaseapp.com;"
           },
         ],
       },
