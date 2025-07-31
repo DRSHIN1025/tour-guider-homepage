@@ -358,3 +358,5 @@ export default function TourGuiderHomepage() {
     </div>
   )
 }
+   // TODO: 실제 카카오톡 채널 ID로 교체 필요 (2025-07-30)
+      const KAKAO_CHANNEL_ID = 'TEMP_CHANNEL_ID';
