@@ -27,15 +27,15 @@ import {
 export default function TourGuiderHomepage() {
   // 강제로 작동하는 버튼 핸들러들
   const handleKakaoChat = () => {
-    console.log('카카오톡 버튼 클릭됨 - 강제 작동');
-    alert('카카오톡 채팅 페이지로 이동합니다!');
-    window.open('https://pf.kakao.com/_your_channel_id/chat', '_blank');
+    // TODO: 실제 카카오톡 채널 ID로 교체 필요
+    const KAKAO_CHANNEL_ID = 'TEMP_CHANNEL'; // 나중에 교체할 부분
+    window.open(`https://pf.kakao.com/${KAKAO_CHANNEL_ID}/chat`, '_blank');
   };
 
   const handlePhoneCall = () => {
-    console.log('전화 버튼 클릭됨 - 강제 작동');
-    alert('전화 연결을 시도합니다!');
-    window.location.href = 'tel:1588-0000';
+    // TODO: 실제 상담 전화번호로 교체 필요
+    const CONTACT_NUMBER = '010-0000-0000'; // 나중에 교체할 부분
+    window.location.href = `tel:${CONTACT_NUMBER}`;
   };
 
   const handlePayment = () => {
@@ -229,7 +229,7 @@ export default function TourGuiderHomepage() {
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl transition-colors"
                 >
                   <Phone className="w-5 h-5 mr-2" />
-                  1588-0000
+                  010-0000-0000
                 </Button>
               </CardContent>
             </Card>
@@ -311,7 +311,7 @@ export default function TourGuiderHomepage() {
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-emerald-400" />
                   <div>
-                    <p className="font-bold text-white">1588-0000</p>
+                    <p className="font-bold text-white">010-0000-0000</p>
                     <p className="text-sm">평일 9:00-18:00</p>
                   </div>
                 </div>
