@@ -1,30 +1,8 @@
-import { MetadataRoute } from 'next'
-
+import type { MetadataRoute } from 'next';
 export default function robots(): MetadataRoute.Robots {
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.tourguider.biz';
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/private/',
-          '/_next/',
-          '/static/',
-        ],
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/private/',
-        ],
-      },
-    ],
-    sitemap: 'https://tourguider.com/sitemap.xml',
-    host: 'https://tourguider.com',
-  }
+    rules: [{ userAgent: '*', allow: '/' }],
+    sitemap: `${base}/sitemap.xml`,
+  };
 } 

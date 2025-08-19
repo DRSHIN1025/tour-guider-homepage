@@ -1,0 +1,32 @@
+{
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "asia-northeast3"
+    }
+  },
+    "headers": [
+      {
+        "source": "/**",
+        "headers": [
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Referrer-Policy", "value": "origin-when-cross-origin" },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://connect.facebook.net https://wcs.naver.net https://static.hotjar.com https://developers.kakao.com https://static.nid.naver.com https://apis.google.com https://accounts.google.com https://t1.kakaocdn.net https://ssl.gstatic.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: https://lh3.googleusercontent.com https://graph.facebook.com https://ssl.gstatic.com https://www.gstatic.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.facebook.com https://developers.kakao.com https://kauth.kakao.com https://kapi.kakao.com https://openapi.naver.com https://nid.naver.com https://accounts.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://storage.googleapis.com https://fcm.googleapis.com; frame-src 'self' https://accounts.google.com https://www.facebook.com https://developers.kakao.com https://kauth.kakao.com https://nid.naver.com https://tour-guider-homepage.firebaseapp.com;"
+          }
+        ]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

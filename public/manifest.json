@@ -1,73 +1,66 @@
 {
-  "name": "투어가이더 - 동남아 맞춤 여행",
+  "name": "투어가이더 - 동남아 여행 가이드",
   "short_name": "투어가이더",
-  "description": "동남아 현지 가이드와 함께하는 특별한 맞춤 여행",
+  "description": "동남아 현지 가이드들과 함께하는 맞춤 여행",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F5EF",
-  "theme_color": "#2D5C4D",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
   "orientation": "portrait-primary",
-  "categories": ["travel", "tourism", "lifestyle"],
-  "lang": "ko",
-  "scope": "/",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/placeholder-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/placeholder-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-desktop.png", 
-      "sizes": "1920x1080",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
+  "categories": ["travel", "lifestyle", "business"],
+  "lang": "ko",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "related_applications": [],
   "shortcuts": [
     {
       "name": "견적 요청",
       "short_name": "견적",
-      "description": "맞춤 여행 견적을 요청하세요",
+      "description": "새로운 여행 견적을 요청하세요",
       "url": "/quote",
       "icons": [
         {
-          "src": "/icon-quote.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/placeholder-logo.png",
+          "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "여행 후기",
-      "short_name": "후기",
-      "description": "다른 여행객들의 후기를 확인하세요",
-      "url": "/reviews",
+      "name": "레퍼럴 관리",
+      "short_name": "레퍼럴",
+      "description": "레퍼럴 코드를 관리하고 친구를 초대하세요",
+      "url": "/referral",
       "icons": [
         {
-          "src": "/icon-reviews.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/placeholder-logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "내 대시보드",
+      "short_name": "대시보드",
+      "description": "내 견적 이력과 레퍼럴 통계를 확인하세요",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/placeholder-logo.png",
+          "sizes": "96x96"
         }
       ]
     }

@@ -1,5 +1,8 @@
 import { Metadata } from 'next'
 import { Button } from "@/components/ui/button"
+
+// ISR: 1시간마다 재생성
+export const revalidate = 3600;
 import { Card, CardContent } from "@/components/ui/card"
 import {
   MapPin,
@@ -11,26 +14,23 @@ import {
   Award,
   Globe,
   Heart,
-  Clock,
-  CheckCircle,
   Target,
   Compass,
   ArrowRight
 } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 
 export const metadata: Metadata = {
-  title: "회사소개 - 투어가이더",
-  description: "동남아 현지 가이드와 함께하는 특별한 맞춤 여행. 투어가이더의 미션, 비전, 그리고 팀을 소개합니다. 안전하고 믿을 수 있는 여행 파트너.",
+  title: "회사소개 - K-BIZ TRAVEL CORP",
+  description: "여행 비즈니스의 새로운 표준, K-BIZ TRAVEL CORP의 미션, 비전, 그리고 팀을 소개합니다.",
   keywords: [
-    "투어가이더 소개", "회사소개", "동남아 여행사", "현지 가이드", "여행 전문가", 
+    "K-BIZ TRAVEL CORP 소개", "회사소개", "동남아 여행사", "현지 가이드", "여행 전문가", 
     "안전한 여행", "맞춤 여행", "여행 파트너", "믿을 수 있는 여행사"
   ],
   openGraph: {
-    title: "회사소개 - 투어가이더",
-    description: "동남아 현지 가이드와 함께하는 특별한 맞춤 여행. 투어가이더의 미션, 비전, 그리고 팀을 소개합니다.",
-    url: "https://tourguider.com/about",
+    title: "회사소개 - K-BIZ TRAVEL CORP",
+    description: "여행 비즈니스의 새로운 표준, K-BIZ TRAVEL CORP의 미션, 비전, 그리고 팀을 소개합니다.",
+    url: "https://www.tourguider.biz/about",
   },
 }
 
@@ -48,10 +48,10 @@ export default function AboutPage() {
               <MapPin className="w-6 h-6 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold" style={{ color: "#3A3A3A" }}>
-                투어가이더
+              <span className="text-xl font-bold" style={{ color: "#3A3A3C" }}>
+                K-BIZ TRAVEL CORP
               </span>
-              <p className="text-xs text-gray-500">tourguider.com</p>
+              <p className="text-xs text-gray-500">tourguider.biz</p>
             </div>
           </Link>
           <nav className="hidden md:flex items-center space-x-8">

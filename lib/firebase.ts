@@ -1,45 +1,127 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getAnalytics } from 'firebase/analytics';
 
-// Firebase 설정 - 환경변수 우선, fallback 사용
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCJfso0a1JKqny2Qgn9sXJgxaL0Gz57wno",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "tour-guider-homepage.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "tour-guider-homepage",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "tour-guider-homepage.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "879427263594",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:879427263594:web:d43e9b06e0536e8a687e13",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-PT0Z1K0EWK"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  // measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // Analytics 임시 비활성화
 };
 
-// Firebase 앱 초기화
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-  console.log('🔥 Firebase 앱 초기화 성공!');
-} catch (error) {
-  console.error('🔥 Firebase 앱 초기화 실패:', error);
-  throw error;
-}
+// 환경 변수 디버깅
+console.log('Firebase Config:', {
+  apiKey: firebaseConfig.apiKey ? '설정됨' : '설정되지 않음',
+  authDomain: firebaseConfig.authDomain ? '설정됨' : '설정되지 않음',
+  projectId: firebaseConfig.projectId ? '설정됨' : '설정되지 않음',
+  storageBucket: firebaseConfig.storageBucket ? '설정됨' : '설정되지 않음',
+  messagingSenderId: firebaseConfig.messagingSenderId ? '설정됨' : '설정되지 않음',
+  appId: firebaseConfig.appId ? '설정됨' : '설정되지 않음',
+});
 
-// Firebase 서비스 내보내기
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+// Firebase 앱 초기화 (클라이언트 사이드에서만)
+let app: any = null;
+let authInstance: any = null;
+let dbInstance: any = null;
+let storageInstance: any = null;
 
-// Analytics (클라이언트 사이드에서만 초기화)
-let analytics = null;
-if (typeof window !== 'undefined') {
-  try {
-    analytics = getAnalytics(app);
-    console.log('🔥 Firebase Analytics 초기화 성공!');
-  } catch (error) {
-    console.log('🔥 Firebase Analytics 초기화 실패 (정상):', error instanceof Error ? error.message : error);
+export const getAuthInstance = () => {
+  if (typeof window === 'undefined') {
+    console.log('서버 사이드에서 Firebase Auth 초기화 시도 무시');
+    return null;
   }
-}
+  
+  try {
+    if (!app) {
+      if (!getApps().length) {
+        console.log('Firebase 앱 초기화 중...');
+        app = initializeApp(firebaseConfig);
+        console.log('Firebase 앱 초기화 완료');
+      } else {
+        app = getApps()[0];
+        console.log('기존 Firebase 앱 사용');
+      }
+    }
+    
+    if (!authInstance) {
+      console.log('Firebase Auth 초기화 중...');
+      authInstance = getAuth(app);
+      console.log('Firebase Auth 초기화 완료');
+    }
+    return authInstance;
+  } catch (error) {
+    console.error('Firebase Auth 초기화 실패:', error);
+    return null;
+  }
+};
 
-export { analytics };
+export const getFirestoreInstance = () => {
+  if (typeof window === 'undefined') {
+    console.log('서버 사이드에서 Firestore 초기화 시도 무시');
+    return null;
+  }
+  
+  try {
+    if (!app) {
+      if (!getApps().length) {
+        console.log('Firebase 앱 초기화 중...');
+        app = initializeApp(firebaseConfig);
+        console.log('Firebase 앱 초기화 완료');
+      } else {
+        app = getApps()[0];
+        console.log('기존 Firebase 앱 사용');
+      }
+    }
+    
+    if (!dbInstance) {
+      console.log('Firestore 초기화 중...');
+      dbInstance = getFirestore(app);
+      console.log('Firestore 초기화 완료');
+    }
+    return dbInstance;
+  } catch (error) {
+    console.error('Firestore 초기화 실패:', error);
+    return null;
+  }
+};
+
+export const getStorageInstance = () => {
+  if (typeof window === 'undefined') {
+    console.log('서버 사이드에서 Firebase Storage 초기화 시도 무시');
+    return null;
+  }
+  
+  try {
+    if (!app) {
+      if (!getApps().length) {
+        console.log('Firebase 앱 초기화 중...');
+        app = initializeApp(firebaseConfig);
+        console.log('Firebase 앱 초기화 완료');
+      } else {
+        app = getApps()[0];
+        console.log('기존 Firebase 앱 사용');
+      }
+    }
+    
+    if (!storageInstance) {
+      console.log('Firebase Storage 초기화 중...');
+      storageInstance = getStorage(app);
+      console.log('Firebase Storage 초기화 완료');
+    }
+    return storageInstance;
+  } catch (error) {
+    console.error('Firebase Storage 초기화 실패:', error);
+    return null;
+  }
+};
+
+// 기존 export 유지 (하위 호환성)
+export const auth = getAuthInstance();
+export const db = getFirestoreInstance();
+export const storage = getStorageInstance();
+
 export default app;

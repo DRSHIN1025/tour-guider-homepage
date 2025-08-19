@@ -1,68 +1,13 @@
-import { MetadataRoute } from 'next'
+import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://tourguider.com'
-  
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.tourguider.biz';
+  const now = new Date().toISOString();
   return [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/quote`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/destinations/vietnam`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/destinations/thailand`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/destinations/philippines`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/reviews`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-  ]
+    { url: `${base}/`,               lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
+    { url: `${base}/about`,          lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/quote`,          lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
+    { url: `${base}/services`,       lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/reviews`,        lastModified: now, changeFrequency: 'weekly',  priority: 0.6 }
+  ];
 } 

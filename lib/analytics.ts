@@ -1,16 +1,20 @@
 // Google Analytics 설정
 export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-XXXXXXXXXX'
 
-// 페이지뷰 추적
+// 페이지뷰 추적 (임시 비활성화)
 export const pageview = (url: string) => {
+  // 임시로 비활성화
+  return
+  /*
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('config', GA_TRACKING_ID, {
       page_location: url,
     })
   }
+  */
 }
 
-// 이벤트 추적
+// 이벤트 추적 (임시 비활성화)
 export const event = ({
   action,
   category,
@@ -22,6 +26,9 @@ export const event = ({
   label?: string
   value?: number
 }) => {
+  // 임시로 비활성화
+  return
+  /*
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('event', action, {
       event_category: category,
@@ -29,80 +36,47 @@ export const event = ({
       value: value,
     })
   }
+  */
 }
 
-// 맞춤 이벤트들
+// 맞춤 이벤트들 (임시 비활성화)
 export const trackQuoteRequest = (destination: string, duration: string) => {
-  event({
-    action: 'quote_request',
-    category: 'engagement',
-    label: `${destination}_${duration}`,
-  })
+  return
 }
 
 export const trackPhoneClick = () => {
-  event({
-    action: 'phone_click',
-    category: 'contact',
-    label: 'header_phone',
-  })
+  return
 }
 
 export const trackKakaoClick = () => {
-  event({
-    action: 'kakao_click',
-    category: 'contact',
-    label: 'kakao_channel',
-  })
+  return
 }
 
 export const trackReviewView = (reviewId: string) => {
-  event({
-    action: 'review_view',
-    category: 'engagement',
-    label: reviewId,
-  })
+  return
 }
 
 export const trackDestinationSearch = (destination: string) => {
-  event({
-    action: 'destination_search',
-    category: 'search',
-    label: destination,
-  })
+  return
 }
 
-// 전환 추적
+// 전환 추적 (임시 비활성화)
 export const trackConversion = (conversionType: 'quote_submitted' | 'phone_call' | 'booking_completed', value?: number) => {
-  event({
-    action: conversionType,
-    category: 'conversion',
-    value: value,
-  })
+  return
 }
 
-// 사용자 행동 추적
+// 사용자 행동 추적 (임시 비활성화)
 export const trackScrollDepth = (percentage: number) => {
-  event({
-    action: 'scroll_depth',
-    category: 'engagement',
-    label: `${percentage}%`,
-  })
+  return
 }
 
 export const trackTimeOnPage = (seconds: number) => {
-  event({
-    action: 'time_on_page',
-    category: 'engagement',
-    value: seconds,
-  })
+  return
 }
 
-// GTM 데이터레이어 푸시
+// GTM 데이터레이어 푸시 (임시 비활성화)
 export const pushToDataLayer = (data: Record<string, any>) => {
-  if (typeof window !== 'undefined' && window.dataLayer) {
-    window.dataLayer.push(data)
-  }
+  return
 }
 
 // 타입 정의

@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 사용자 컬렉션
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // 견적 요청 컬렉션
+    match /quotes/{quoteId} {
+      allow read, write: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      allow create: if request.auth != null;
+    }
+    
+    // 레퍼럴 코드 컬렉션 - 모든 인증된 사용자가 읽기 가능, 자신의 코드만 생성/수정 가능
+    match /referralCodes/{codeId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // 레퍼럴 사용 기록 컬렉션 - 모든 인증된 사용자가 생성 가능, 관련자만 읽기 가능
+    match /referralUsages/{usageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // 레퍼럴 보상 컬렉션 - 모든 인증된 사용자가 생성 가능, 관련자만 읽기 가능
+    match /referralRewards/{rewardId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // 관리자 전용 컬렉션
+    match /admin/{document=**} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+} 

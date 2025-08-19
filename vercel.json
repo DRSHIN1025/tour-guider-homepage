@@ -14,10 +14,5 @@
   ],
   "env": {
     "NEXT_PUBLIC_BASE_URL": "https://www.tourguider.biz"
-  },
-  "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 30
-    }
   }
 } 

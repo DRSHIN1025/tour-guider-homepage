@@ -1,64 +1,91 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
+import { getAuthInstance } from '@/lib/firebase'
 import { 
-  User, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
+  createUserWithEmailAndPassword, 
+  signOut, 
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+  signInWithPopup,
+  User,
+  updateProfile
+} from 'firebase/auth'
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export const useAuth = () => {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const auth = getAuthInstance()
+    if (!auth) {
+      // 클라이언트에서 Auth 초기화에 실패한 경우 안전하게 종료
+      setLoading(false)
+      return () => {}
+    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
+      setUser(user)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [])
 
   const signIn = async (email: string, password: string) => {
+    const auth = getAuthInstance()
+    if (!auth) return { success: false, error: 'Auth not initialized' }
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return { success: true, user: result.user };
+      const result = await signInWithEmailAndPassword(auth, email, password)
+      return { success: true, user: result.user }
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('로그인 오류:', error)
+      return { success: false, error: error.message }
     }
-  };
+  }
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, displayName?: string) => {
+    const auth = getAuthInstance()
+    if (!auth) return { success: false, error: 'Auth not initialized' }
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      return { success: true, user: result.user };
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      
+      // displayName이 제공된 경우 업데이트
+      if (displayName && result.user) {
+        await updateProfile(result.user, {
+          displayName: displayName
+        })
+      }
+      
+      return { success: true, user: result.user }
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('회원가입 오류:', error)
+      return { success: false, error: error.message }
     }
-  };
+  }
 
   const signInWithGoogle = async () => {
+    const auth = getAuthInstance()
+    if (!auth) return { success: false, error: 'Auth not initialized' }
+    const provider = new GoogleAuthProvider()
+    
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      return { success: true, user: result.user };
+      const result = await signInWithPopup(auth, provider)
+      return { success: true, user: result.user }
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('구글 로그인 오류:', error)
+      return { success: false, error: error.message }
     }
-  };
+  }
 
   const logout = async () => {
+    const auth = getAuthInstance()
+    if (!auth) return { success: false, error: 'Auth not initialized' }
     try {
-      await signOut(auth);
-      return { success: true };
+      await signOut(auth)
+      return { success: true }
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('로그아웃 오류:', error)
+      return { success: false, error: error.message }
     }
-  };
+  }
 
   return {
     user,
@@ -67,5 +94,5 @@ export function useAuth() {
     signUp,
     signInWithGoogle,
     logout
-  };
+  }
 } 

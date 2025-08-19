@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
+import { useAuth } from '@/hooks/useAuth';
 
 declare global {
   interface Window {
@@ -59,30 +60,22 @@ export default function GoogleLogin({ onSuccess, onError }: GoogleLoginProps) {
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
       console.log('구글 로그인 성공:', payload);
       
-      const user = {
-        id: payload.sub,
-        nickname: payload.name || '구글 사용자',
-        email: payload.email || '',
-        profileImage: payload.picture || '',
-        loginType: 'google'
-      };
-
-      // 관리자 권한 확인
-      const isAdmin = user.email === 'admin@tourguider.com' || 
-                     user.email.includes('tourguider.com');
-
-      if (isAdmin) {
-        localStorage.setItem('adminAuth', 'true');
-        localStorage.setItem('adminUser', JSON.stringify(user));
-        
+      // Firebase Auth를 사용한 실제 로그인
+      const { signInWithGoogle } = useAuth();
+      
+      signInWithGoogle().then(() => {
+        console.log('Firebase Google 로그인 성공');
         if (onSuccess) {
-          onSuccess(user);
+          onSuccess(payload);
         } else {
-          router.push('/admin');
+          router.push('/');
         }
-      } else {
-        alert('관리자 권한이 없습니다. 관리자 계정으로 로그인해주세요.');
-      }
+      }).catch((error) => {
+        console.error('Firebase Google 로그인 실패:', error);
+        if (onError) {
+          onError(error);
+        }
+      });
     } catch (error) {
       console.error('구글 로그인 처리 실패:', error);
       if (onError) {
@@ -97,33 +90,22 @@ export default function GoogleLogin({ onSuccess, onError }: GoogleLoginProps) {
       return;
     }
 
-    // 데모 모드
-    const isDemo = !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID === 'demo-key';
-
-    if (isDemo) {
-      const demoUser = {
-        id: 'google-demo-admin',
-        nickname: '구글 관리자',
-        email: 'google-admin@tourguider.com',
-        profileImage: '',
-        loginType: 'google'
-      };
-
-      localStorage.setItem('adminAuth', 'true');
-      localStorage.setItem('adminUser', JSON.stringify(demoUser));
-      
+    // Firebase Auth를 사용한 Google 로그인
+    const { signInWithGoogle } = useAuth();
+    
+    signInWithGoogle().then(() => {
+      console.log('Firebase Google 로그인 성공');
       if (onSuccess) {
-        onSuccess(demoUser);
+        onSuccess(null);
       } else {
-        router.push('/admin');
+        router.push('/');
       }
-      return;
-    }
-
-    // 실제 구글 로그인
-    if (window.google) {
-      window.google.accounts.id.prompt();
-    }
+    }).catch((error) => {
+      console.error('Firebase Google 로그인 실패:', error);
+      if (onError) {
+        onError(error);
+      }
+    });
   };
 
   return (

@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import { siteConfig } from '@/app/config/site'
 
 interface SEOHeadProps {
   title?: string
@@ -15,25 +16,24 @@ interface SEOHeadProps {
 }
 
 export function SEOHead({
-  title = "투어가이더 - 동남아 맞춤 여행의 새로운 시작",
-  description = "동남아 현지 가이드와 함께하는 특별한 맞춤 여행. 베트남, 태국, 필리핀 등 동남아 전문 여행사. 현지 가이드 직접 매칭, 맞춤 일정 제안, 안전한 여행 보장.",
+  title = `${siteConfig.name}`,
+  description = siteConfig.description,
   keywords = [
-    "동남아 여행", "맞춤 여행", "현지 가이드", "베트남 여행", "태국 여행", "필리핀 여행", 
-    "여행 견적", "가족 여행", "효도 여행", "혼자 여행", "중년 여행", "안전한 여행",
-    "투어가이더", "동남아 투어", "해외여행", "여행사", "여행 플래너"
+    "여행", "맞춤 여행", "비즈니스 여행", "브랜드", "견적", "상담",
+    siteConfig.name
   ],
-  image = "/og-image.jpg",
-  url = "https://tourguider.com",
+  image = siteConfig.ogImage || siteConfig.logo,
+  url = siteConfig.url,
   type = "website",
   publishedTime,
   modifiedTime,
-  author = "투어가이더",
+  author = siteConfig.name,
   locale = "ko_KR",
-  siteName = "투어가이더"
+  siteName = siteConfig.name
 }: SEOHeadProps) {
-  const fullTitle = title.includes('투어가이더') ? title : `${title} | 투어가이더`
-  const fullUrl = url.startsWith('http') ? url : `https://tourguider.com${url}`
-  const fullImage = image.startsWith('http') ? image : `https://tourguider.com${image}`
+  const fullTitle = title.includes(siteConfig.name) ? title : `${title} | ${siteConfig.name}`
+  const fullUrl = url.startsWith('http') ? url : `${siteConfig.url}${url}`
+  const fullImage = image.startsWith('http') ? image : `${siteConfig.url}${image}`
 
   return (
     <Head>
@@ -82,8 +82,8 @@ export function SEOHead({
       
       {/* 추가 링크 */}
       <link rel="manifest" href="/manifest.json" />
-      <meta name="theme-color" content="#2D5C4D" />
-      <meta name="msapplication-TileColor" content="#2D5C4D" />
+      <meta name="theme-color" content="#059669" />
+      <meta name="msapplication-TileColor" content="#059669" />
     </Head>
   )
 } 

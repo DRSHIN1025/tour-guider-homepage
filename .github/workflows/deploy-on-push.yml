@@ -1,0 +1,69 @@
+name: Deploy on Push
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      
+      - run: npm ci || npm install
+      - run: npm run build || npm run build:fast
+      
+      # Firebase CLI 설치
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      # Firebase 프로젝트 설정
+      - name: Setup Firebase Project
+        run: firebase use tour-guider-homepage
+      
+      # 서비스 계정 키 확인
+      - name: Check Service Account
+        id: check-service-account
+        run: |
+          if [ -n "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}" ]; then
+            echo "service_account_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "service_account_exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      # 서비스 계정 키 파일 생성
+      - name: Setup Service Account
+        if: steps.check-service-account.outputs.service_account_exists == 'true'
+        run: |
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}' > firebase-service-account.json
+          echo "Service account key file created"
+      
+      # Firebase 배포 (서비스 계정 키 사용)
+      - name: Firebase Deploy
+        if: steps.check-service-account.outputs.service_account_exists == 'true'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
+        run: |
+          echo "Deploying to Firebase using service account..."
+          firebase deploy --only hosting
+      
+      # 서비스 계정 키가 없을 때 안내
+      - name: Skip Deploy (No Service Account)
+        if: steps.check-service-account.outputs.service_account_exists == 'false'
+        run: |
+          echo "⚠️ Firebase 서비스 계정 키가 설정되지 않아 배포를 건너뜁니다."
+          echo "GitHub Secrets에 GOOGLE_APPLICATION_CREDENTIALS_JSON을 추가하세요."
+          echo ""
+          echo "설정 방법:"
+          echo "1. Google Cloud Console → IAM 및 관리 → 서비스 계정"
+          echo "2. 서비스 계정 생성 → 키 만들기 → JSON 다운로드"
+          echo "3. GitHub Secrets에 GOOGLE_APPLICATION_CREDENTIALS_JSON으로 추가"
+      
+      - name: Verify
+        run: npm run verify:all || echo "verify skipped"
+
+

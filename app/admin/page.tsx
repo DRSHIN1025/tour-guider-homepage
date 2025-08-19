@@ -1,771 +1,528 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { collection, getDocs, doc, updateDoc, addDoc, query, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Search, Mail, Download, Eye, Edit, LogOut, Bell, Send } from "lucide-react";
-import { FileUpload } from "@/components/ui/file-upload";
-
-interface Quote {
-  id: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  adults: number;
-  children: number;
-  budget: string;
-  name: string;
-  phone: string;
-  email: string;
-  requirements: string;
-  createdAt: string;
-  status?: string;
-  notes?: string;
-  attachments?: string[];
-  adminResponse?: string;
-  adminFiles?: string[];
-  responseDate?: string;
-  userId?: string;
-}
-
-interface AdminSession {
-  isAuthenticated: boolean;
-  loginTime: number;
-  expiresAt: number;
-}
-
-const ADMIN_SESSION_DURATION = 30 * 60 * 1000; // 30분
+import { useState, useEffect } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { 
+  Download, 
+  Eye, 
+  CheckCircle, 
+  XCircle, 
+  Clock,
+  Users,
+  Gift,
+  TrendingUp,
+  Phone
+} from 'lucide-react'
+import { subscribeToQuoteRequests, updateQuoteStatus, QuoteRequest } from '@/lib/firestore'
+import { 
+  getAllReferralCodes, 
+  getAllReferralStats, 
+  approveReward, 
+  deactivateReferralCode,
+  ReferralCode,
+  ReferralUsage,
+  ReferralReward
+} from '@/lib/referral'
+import Header from '@/components/Header'
+import { toast } from 'sonner'
 
 export default function AdminPage() {
-  const router = useRouter();
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [filteredQuotes, setFilteredQuotes] = useState<Quote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [adminResponse, setAdminResponse] = useState('');
-  const [adminFiles, setAdminFiles] = useState<File[]>([]);
-  const [timeRemaining, setTimeRemaining] = useState<number>(30 * 60);
+  const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([])
+  const [selectedQuote, setSelectedQuote] = useState<QuoteRequest | null>(null)
+  const [referralCodes, setReferralCodes] = useState<ReferralCode[]>([])
+  const [referralUsages, setReferralUsages] = useState<ReferralUsage[]>([])
+  const [referralRewards, setReferralRewards] = useState<ReferralReward[]>([])
+  const [referralStats, setReferralStats] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
 
+  // 견적 요청 데이터 로드
   useEffect(() => {
-    // 인증 확인 및 세션 관리
-    const checkAuth = () => {
-      if (typeof window !== 'undefined') {
-        const auth = localStorage.getItem('adminAuth');
-        const userInfo = localStorage.getItem('adminUser');
-        const sessionStart = localStorage.getItem('adminSessionStart');
-        
-        if (!auth || !sessionStart) {
-          router.push('/admin/login');
-          return;
-        }
+    const unsubscribe = subscribeToQuoteRequests((requests) => {
+      setQuoteRequests(requests)
+    })
 
-        // 세션 만료 체크 (30분)
-        const sessionStartTime = parseInt(sessionStart);
-        const currentTime = Date.now();
-        const sessionDuration = currentTime - sessionStartTime;
-        const maxSessionTime = 30 * 60 * 1000; // 30분
+    return () => unsubscribe()
+  }, [])
 
-        if (sessionDuration > maxSessionTime) {
-          // 세션 만료
-          localStorage.removeItem('adminAuth');
-          localStorage.removeItem('adminUser');
-          localStorage.removeItem('adminSessionStart');
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-          router.push('/admin/login');
-          return;
-        }
+  // 레퍼럴 데이터 로드
+  useEffect(() => {
+    loadReferralData()
+  }, [])
 
-        // 남은 세션 시간 계산
-        const timeLeft = Math.floor((maxSessionTime - sessionDuration) / 1000);
-        setTimeRemaining(timeLeft);
-        
-        if (userInfo) {
+  const loadReferralData = async () => {
+    setLoading(true)
+    try {
+      const [codes, stats] = await Promise.all([
+        getAllReferralCodes(),
+        getAllReferralStats()
+      ])
+      setReferralCodes(codes)
+      setReferralStats(stats)
+      setReferralRewards(stats.rewards || [])
+    } catch (error) {
+      console.error('레퍼럴 데이터 로드 오류:', error)
+      toast.error('레퍼럴 데이터를 불러오는데 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 견적 상태 변경
+  const handleStatusChange = async (quoteId: string, newStatus: 'pending' | 'reviewing' | 'approved' | 'rejected') => {
+    try {
+      await updateQuoteStatus(quoteId, newStatus)
+      
+      // 견적이 승인되면 사용자에게 이메일 및 카카오톡 알림 발송
+      if (newStatus === 'approved') {
+        const quote = quoteRequests.find(q => q.id === quoteId)
+        if (quote) {
           try {
-            // Supabase 클라이언트 대신 Firebase 사용
-            const user = JSON.parse(userInfo);
-            // 여기에 Firebase 사용자 정보 로드 로직 추가
-            // 예: const user = await getUserFromFirebase(userInfo.uid);
-            // setAdminUser(user);
-          } catch (e) {
-            console.error('사용자 정보 파싱 오류:', e);
+            // 이메일 알림 발송
+            const emailResponse = await fetch('/api/email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                type: 'quote_complete',
+                quoteData: {
+                  destination: quote.destination,
+                  duration: quote.duration,
+                  people: quote.people
+                },
+                userEmail: quote.userEmail,
+                userName: quote.userName
+              })
+            })
+
+            if (emailResponse.ok) {
+              console.log('이메일 알림 발송 성공')
+            } else {
+              console.error('이메일 알림 발송 실패')
+            }
+
+            // 카카오톡 알림 발송
+            const kakaoResponse = await fetch('/api/kakao/notify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                type: 'quote_complete_user',
+                data: {
+                  userName: quote.userName,
+                  destination: quote.destination,
+                  duration: quote.duration,
+                  people: quote.people,
+                  message: '견적이 완료되었습니다! 상세한 여행 일정과 가격을 확인해보세요.'
+                }
+              })
+            })
+
+            if (kakaoResponse.ok) {
+              console.log('카카오톡 알림 발송 성공')
+              toast.success('상태가 업데이트되었습니다. 견적 완료 알림이 발송되었습니다.')
+            } else {
+              console.error('카카오톡 알림 발송 실패')
+              toast.success('상태가 업데이트되었습니다. (카카오톡 알림 발송 실패)')
+            }
+          } catch (notificationError) {
+            console.error('알림 발송 오류:', notificationError)
+            toast.success('상태가 업데이트되었습니다. (알림 발송 실패)')
           }
         }
-        
-        // setIsAuthenticated(true); // Supabase 대신 Firebase 사용
-        fetchQuotes();
+      } else {
+        toast.success('상태가 업데이트되었습니다.')
       }
-    };
-    
-    checkAuth();
-
-    // 세션 타이머 (1초마다 업데이트)
-    const sessionTimer = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          // 세션 만료
-          localStorage.removeItem('adminAuth');
-          localStorage.removeItem('adminUser');
-          localStorage.removeItem('adminSessionStart');
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-          router.push('/admin/login');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(sessionTimer);
-  }, [router]);
-
-  useEffect(() => {
-    // 검색 및 필터링
-    let filtered = quotes;
-    
-    if (searchTerm) {
-      filtered = filtered.filter(quote => 
-        quote.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.phone.includes(searchTerm)
-      );
-    }
-    
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(quote => (quote.status || 'pending') === statusFilter);
-    }
-    
-    setFilteredQuotes(filtered);
-  }, [quotes, searchTerm, statusFilter]);
-
-  const fetchQuotes = async () => {
-    try {
-      // Supabase 클라이언트 대신 Firebase 사용
-      const quotesRef = collection(db, 'Quotes');
-      const q = query(quotesRef, orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const fetchedQuotes: Quote[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedQuotes.push({ id: doc.id, ...doc.data() } as Quote);
-      });
-      setQuotes(fetchedQuotes);
     } catch (error) {
-      console.error('Failed to fetch quotes:', error);
-    } finally {
-      setLoading(false);
+      console.error('상태 업데이트 오류:', error)
+      toast.error('상태 업데이트에 실패했습니다.')
     }
-  };
-
-  const updateQuoteStatus = async (id: string, status: string) => {
-    try {
-      // Supabase 클라이언트 대신 Firebase 사용
-      const quoteRef = doc(db, 'Quotes', id);
-      await updateDoc(quoteRef, { status });
-      
-      // 로컬 상태 업데이트
-      setQuotes(prev => prev.map(quote => 
-        quote.id === id ? { ...quote, status } : quote
-      ));
-      
-      console.log(`Status updated successfully: ${id} -> ${status}`);
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      alert('상태 변경 중 오류가 발생했습니다.');
-    }
-  };
-
-  const sendEmailNotification = async (quote: Quote) => {
-    // 실제 이메일 발송 로직 (여기서는 시뮬레이션)
-    alert(`${quote.name}님께 이메일이 발송되었습니다!\n연락처: ${quote.phone}\n목적지: ${quote.destination}`);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR');
-  };
-
-  const downloadAttachment = async (attachment: string) => {
-    try {
-      // Supabase Storage 대신 Firebase Storage 사용
-      const attachmentData = JSON.parse(attachment);
-      const filePath = attachmentData.filePath;
-      const fileName = attachmentData.originalName;
-
-      const storageRef = ref(storage, filePath);
-      const url = await getDownloadURL(storageRef);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-    } catch (error) {
-      console.error('File download error:', error);
-      alert('파일 다운로드에 실패했습니다.');
-    }
-  };
-
-  const isValidAttachmentData = (attachment: string) => {
-    try {
-      const data = JSON.parse(attachment);
-      return data.originalName && data.filePath && !attachment.includes('업로드 실패') && !attachment.includes('처리 실패');
-    } catch {
-      return false;
-    }
-  };
-
-  const getAttachmentDisplayName = (attachment: string) => {
-    try {
-      const data = JSON.parse(attachment);
-      return data.originalName;
-    } catch {
-      return attachment; // Fallback to raw string
-    }
-  };
-
-  const submitAdminResponse = async (quoteId: string) => {
-    if (!adminResponse.trim() && adminFiles.length === 0) {
-      alert('응답 내용이나 파일을 추가해주세요.');
-      return;
-    }
-
-    // Supabase Storage 대신 Firebase Storage 사용
-    const adminResponsesRef = collection(db, 'AdminResponses');
-    const newResponseRef = await addDoc(adminResponsesRef, {
-      quoteId: quoteId,
-      response: adminResponse.trim() || null,
-      files: adminFiles.map(file => JSON.stringify({
-        originalName: file.name,
-        filePath: `admin-responses/${Date.now()}-${Math.random().toString(36).substring(2)}.${file.name.split('.').pop()}`, // 실제 파일 경로 생성
-        uploadedAt: new Date().toISOString()
-      })),
-      responseDate: new Date().toISOString(),
-      status: 'completed'
-    });
-
-    // Supabase 클라이언트 대신 Firebase 사용
-    const quoteRef = doc(db, 'Quotes', quoteId);
-    await updateDoc(quoteRef, {
-      adminResponse: adminResponse.trim() || null,
-      adminFiles: adminFiles.map(file => JSON.stringify({
-        originalName: file.name,
-        filePath: `admin-responses/${Date.now()}-${Math.random().toString(36).substring(2)}.${file.name.split('.').pop()}`, // 실제 파일 경로 생성
-        uploadedAt: new Date().toISOString()
-      })),
-      responseDate: new Date().toISOString(),
-      status: 'completed'
-    });
-
-    alert('고객에게 견적이 전달되었습니다!');
-    setAdminResponse('');
-    setAdminFiles([]);
-    fetchQuotes(); // 목록 새로고침
-  };
-
-  const getStatusBadge = (status?: string) => {
-    switch (status || 'pending') {
-      case 'pending':
-        return <Badge variant="secondary">대기중</Badge>;
-      case 'processing':
-        return <Badge variant="default">처리중</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">완료</Badge>;
-      case 'cancelled':
-        return <Badge variant="destructive">취소</Badge>;
-      default:
-        return <Badge variant="secondary">대기중</Badge>;
-    }
-  };
-
-  const downloadExcel = () => {
-    const headers = ['접수일시', '상태', '이름', '연락처', '이메일', '목적지', '출발일', '귀국일', '성인', '아동', '유아', '항공사', '호텔등급', '여행스타일', '예산', '요청사항', '메모'];
-    
-    const csvContent = [
-      headers.join(','),
-      ...filteredQuotes.map(quote => [
-        formatDate(quote.createdAt),
-        quote.status || 'pending',
-        quote.name,
-        quote.phone,
-        quote.email || '',
-        quote.destination,
-        formatDate(quote.startDate),
-        formatDate(quote.endDate),
-        quote.adults,
-        quote.children,
-        quote.infants,
-        quote.airline || '',
-        quote.hotel || '',
-        quote.travelStyle.join(';'),
-        quote.budget || '',
-        quote.requests || '',
-        quote.notes || ''
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `견적요청_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleLogout = () => {
-    if (confirm('정말 로그아웃 하시겠습니까?')) {
-      // 로그아웃 로그
-      console.log('관리자 로그아웃:', {
-        // Supabase 대신 Firebase 사용자 정보 로드
-        username: JSON.parse(localStorage.getItem('adminUser') || '{}').nickname || 'unknown',
-        timestamp: new Date().toISOString(),
-        sessionId: JSON.parse(localStorage.getItem('adminUser') || '{}').uid || 'unknown'
-      });
-
-      localStorage.removeItem('adminAuth');
-      localStorage.removeItem('adminUser');
-      localStorage.removeItem('adminSessionStart');
-      router.push('/admin/login');
-    }
-  };
-
-  const formatSessionTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  // Supabase 대신 Firebase 사용
-  const isAuthenticated = localStorage.getItem('adminAuth') !== null;
-
-  if (!isAuthenticated) {
-    return <div>인증 확인 중...</div>;
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">로딩 중...</div>
-      </div>
-    );
+  // 파일 다운로드
+  const handleDownloadFile = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(downloadUrl)
+      toast.success('파일이 다운로드되었습니다.')
+    } catch (error) {
+      console.error('파일 다운로드 오류:', error)
+      toast.error('파일 다운로드에 실패했습니다.')
+    }
   }
 
-  const pendingCount = quotes.filter(q => (q.status || 'pending') === 'pending').length;
-  const processingCount = quotes.filter(q => q.status === 'processing').length;
-  const completedCount = quotes.filter(q => q.status === 'completed').length;
+  // 보상 승인
+  const handleApproveReward = async (rewardId: string) => {
+    try {
+      await approveReward(rewardId)
+      toast.success('보상이 승인되었습니다.')
+      loadReferralData() // 데이터 새로고침
+    } catch (error) {
+      console.error('보상 승인 오류:', error)
+      toast.error('보상 승인에 실패했습니다.')
+    }
+  }
+
+  // 레퍼럴 코드 비활성화
+  const handleDeactivateCode = async (codeId: string) => {
+    try {
+      await deactivateReferralCode(codeId)
+      toast.success('레퍼럴 코드가 비활성화되었습니다.')
+      loadReferralData() // 데이터 새로고침
+    } catch (error) {
+      console.error('코드 비활성화 오류:', error)
+      toast.error('코드 비활성화에 실패했습니다.')
+    }
+  }
+
+  const handlePayReward = async (rewardId: string) => {
+    try {
+      // 실제 결제 시스템과 연동 필요
+      await approveReward(rewardId)
+      toast.success('보상이 지급되었습니다.')
+      loadReferralData()
+    } catch (error) {
+      console.error('보상 지급 오류:', error)
+      toast.error('보상 지급에 실패했습니다.')
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { label: '대기중', color: 'bg-yellow-100 text-yellow-800' },
+      reviewing: { label: '검토중', color: 'bg-blue-100 text-blue-800' },
+      approved: { label: '승인됨', color: 'bg-green-100 text-green-800' },
+      rejected: { label: '거절됨', color: 'bg-red-100 text-red-800' }
+    }
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+    return <Badge className={config.color}>{config.label}</Badge>
+  }
 
   return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold">견적 요청 관리</CardTitle>
-            <div className="flex gap-4 mt-2">
-              <Badge variant="secondary">대기중 {pendingCount}</Badge>
-              <Badge variant="default">처리중 {processingCount}</Badge>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">완료 {completedCount}</Badge>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
+            <p className="text-gray-600">견적 요청 관리 및 레퍼럴 시스템 모니터링</p>
           </div>
-          <div className="flex items-center gap-4">
-            {/* Supabase 대신 Firebase 사용자 정보 로드 */}
-            <div className="flex items-center gap-4">
-              {/* 세션 정보 */}
-              <div className="text-right text-sm">
-                <p className={`font-medium ${timeRemaining < 300 ? 'text-red-600' : 'text-green-600'}`}>
-                  세션: {formatSessionTime(parseInt(timeRemaining))}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {timeRemaining < 300 ? '곧 만료됩니다' : '정상'}
-                </p>
-              </div>
-              
-              {/* 사용자 정보 */}
-              <div className="flex items-center gap-3 text-sm border-l pl-4">
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <span className="text-red-600 font-bold text-xs">
-                    {/* Supabase 대신 Firebase 사용자 정보 로드 */}
-                    {JSON.parse(localStorage.getItem('adminUser') || '{}').nickname?.charAt(0) || 'A'}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">
-                    {/* Supabase 대신 Firebase 사용자 정보 로드 */}
-                    {JSON.parse(localStorage.getItem('adminUser') || '{}').nickname || '관리자'}
-                  </p>
-                  <p className="text-gray-500 text-xs flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    보안 로그인
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={fetchQuotes} variant="outline">
-                새로고침
-              </Button>
-              <Button onClick={downloadExcel}>
-                <Download className="w-4 h-4 mr-2" />
-                엑셀 다운로드
-              </Button>
-              <Button onClick={handleLogout} variant="destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                로그아웃
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* 검색 및 필터 */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="이름, 목적지, 연락처로 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="상태 필터" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="pending">대기중</SelectItem>
-                <SelectItem value="processing">처리중</SelectItem>
-                <SelectItem value="completed">완료</SelectItem>
-                <SelectItem value="cancelled">취소</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>상태</TableHead>
-                  <TableHead>접수일시</TableHead>
-                  <TableHead>이름</TableHead>
-                  <TableHead>연락처</TableHead>
-                  <TableHead>목적지</TableHead>
-                  <TableHead>여행기간</TableHead>
-                  <TableHead>인원</TableHead>
-                  <TableHead>예산</TableHead>
-                  <TableHead>첨부파일</TableHead>
-                  <TableHead>액션</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredQuotes.map((quote) => (
-                  <TableRow key={quote.id}>
-                    <TableCell>
-                      <Select 
-                        value={quote.status || 'pending'} 
-                        onValueChange={(value) => updateQuoteStatus(quote.id, value)}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">대기중</SelectItem>
-                          <SelectItem value="processing">처리중</SelectItem>
-                          <SelectItem value="completed">완료</SelectItem>
-                          <SelectItem value="cancelled">취소</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatDate(quote.createdAt)}
-                    </TableCell>
-                    <TableCell>{quote.name}</TableCell>
-                    <TableCell>{quote.phone}</TableCell>
-                    <TableCell>{quote.destination}</TableCell>
-                    <TableCell>
-                      {formatDate(quote.startDate)} ~ {formatDate(quote.endDate)}
-                    </TableCell>
-                    <TableCell>
-                      성인 {quote.adults}명
-                      {quote.children > 0 && `, 아동 ${quote.children}명`}
-                      {quote.infants > 0 && `, 유아 ${quote.infants}명`}
-                    </TableCell>
-                    <TableCell>{quote.budget || '-'}</TableCell>
-                    <TableCell>
-                      {quote.attachments && quote.attachments.length > 0 ? (
-                        <Badge variant="secondary" className="text-xs">
-                          {quote.attachments.length}개 파일
-                        </Badge>
-                      ) : (
-                        <span className="text-gray-400 text-xs">없음</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedQuote(quote)}>
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>견적 요청 상세 정보</DialogTitle>
-                            </DialogHeader>
-                            {selectedQuote && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label>고객명</Label>
-                                    <p className="font-medium">{selectedQuote.name}</p>
-                                  </div>
-                                  <div>
-                                    <Label>연락처</Label>
-                                    <p className="font-medium">{selectedQuote.phone}</p>
-                                  </div>
-                                  <div>
-                                    <Label>이메일</Label>
-                                    <p className="font-medium">{selectedQuote.email || '-'}</p>
-                                  </div>
-                                  <div>
-                                    <Label>목적지</Label>
-                                    <p className="font-medium">{selectedQuote.destination}</p>
-                                  </div>
-                                  <div>
-                                    <Label>여행 기간</Label>
-                                    <p className="font-medium">
-                                      {formatDate(selectedQuote.startDate)} ~ {formatDate(selectedQuote.endDate)}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label>인원</Label>
-                                    <p className="font-medium">
-                                      성인 {selectedQuote.adults}명
-                                      {selectedQuote.children > 0 && `, 아동 ${selectedQuote.children}명`}
-                                      {selectedQuote.infants > 0 && `, 유아 ${selectedQuote.infants}명`}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label>항공사</Label>
-                                    <p className="font-medium">{selectedQuote.airline || '-'}</p>
-                                  </div>
-                                  <div>
-                                    <Label>호텔 등급</Label>
-                                    <p className="font-medium">{selectedQuote.hotel || '-'}</p>
-                                  </div>
-                                  <div>
-                                    <Label>여행 스타일</Label>
-                                    <div className="flex flex-wrap gap-1">
-                                      {selectedQuote.travelStyle.map((style, index) => (
-                                        <Badge key={index} variant="outline" className="text-xs">
-                                          {style}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <Label>예산</Label>
-                                    <p className="font-medium">{selectedQuote.budget || '-'}</p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <Label>요청사항</Label>
-                                  <p className="mt-1 p-3 bg-gray-50 rounded-md">
-                                    {selectedQuote.requests || '없음'}
-                                  </p>
-                                </div>
-                                
-                                {selectedQuote.attachments && selectedQuote.attachments.length > 0 && (
-                                  <div>
-                                    <Label>첨부파일</Label>
-                                    <div className="mt-2 space-y-2">
-                                      {selectedQuote.attachments.map((attachment, index) => (
-                                        <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded border hover:bg-blue-100 transition-colors">
-                                          <div className="flex items-center space-x-3">
-                                            <Download className="w-4 h-4 text-blue-500" />
-                                            <div>
-                                              <span className="text-sm font-medium text-gray-700 block">
-                                                {getAttachmentDisplayName(attachment)}
-                                              </span>
-                                              {isValidAttachmentData(attachment) && (
-                                                <span className="text-xs text-gray-500">
-                                                  업로드됨: {new Date(JSON.parse(attachment).uploadedAt).toLocaleDateString('ko-KR')}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <div className="flex items-center space-x-2">
-                                            <Badge variant="secondary" className="text-xs">
-                                              첨부됨
-                                            </Badge>
-                                                                                         {isValidAttachmentData(attachment) ? (
-                                               <Button
-                                                 size="sm"
-                                                 variant="outline"
-                                                 onClick={() => downloadAttachment(attachment)}
-                                                 className="text-xs px-2 py-1 h-7"
-                                               >
-                                                 <Download className="w-3 h-3 mr-1" />
-                                                 다운로드
-                                               </Button>
-                                             ) : (
-                                               <div className="flex flex-col items-end gap-1">
-                                                 <Badge variant="destructive" className="text-xs">
-                                                   다운로드 불가
-                                                 </Badge>
-                                                 <span className="text-xs text-gray-500">
-                                                   {attachment.includes('실패') ? '업로드 오류' : '파일명만 저장됨'}
-                                                 </span>
-                                               </div>
-                                             )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                      <p className="text-xs text-gray-500 mt-2">
-                                        💡 첨부파일은 고객이 제공한 견적 예시, 타사 견적서, 여행 일정표 등입니다. 
-                                        <br />
-                                        ⚠️ 현재 파일명만 저장되며, 실제 파일 다운로드를 위해서는 Supabase Storage 설정이 필요합니다.
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                <div>
-                                  <Label>관리자 메모</Label>
-                                  <Textarea 
-                                    placeholder="이 고객에 대한 메모를 입력하세요..."
-                                    defaultValue={selectedQuote.notes || ''}
-                                    className="mt-1"
-                                  />
-                                </div>
 
-                                {/* 관리자 응답 섹션 */}
-                                <div className="border-t pt-6">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <Label className="text-lg font-semibold">고객 응답 보내기</Label>
-                                    {selectedQuote.adminResponse && (
-                                      <Badge variant="outline" className="bg-green-50 text-green-700">
-                                        응답완료
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  
-                                  {selectedQuote.adminResponse ? (
-                                    <div className="space-y-4">
-                                      <div className="p-4 bg-green-50 rounded-lg border">
-                                        <p className="text-sm text-gray-600 mb-2">이전 응답:</p>
-                                        <p className="whitespace-pre-wrap">{selectedQuote.adminResponse}</p>
-                                        <p className="text-xs text-gray-500 mt-2">
-                                          전송일: {selectedQuote.responseDate ? new Date(selectedQuote.responseDate).toLocaleString('ko-KR') : '-'}
-                                        </p>
-                                      </div>
-                                      
-                                      {selectedQuote.adminFiles && selectedQuote.adminFiles.length > 0 && (
-                                        <div>
-                                          <p className="text-sm font-medium mb-2">전송한 파일:</p>
-                                          <div className="space-y-2">
-                                            {selectedQuote.adminFiles.map((file, index) => (
-                                              <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded text-sm">
-                                                <Download className="w-4 h-4 text-gray-500" />
-                                                {JSON.parse(file).originalName}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : null}
+          <Tabs defaultValue="quotes" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="quotes">견적 요청 관리</TabsTrigger>
+              <TabsTrigger value="referral">레퍼럴 시스템</TabsTrigger>
+            </TabsList>
 
-                                  <div className="space-y-4 mt-4">
-                                    <div>
-                                      <Label>견적 메시지</Label>
-                                      <Textarea
-                                        placeholder="고객에게 보낼 견적 내용을 작성하세요..."
-                                        value={adminResponse}
-                                        onChange={(e) => setAdminResponse(e.target.value)}
-                                        rows={4}
-                                        className="mt-1"
-                                      />
-                                    </div>
-                                    
-                                    <div>
-                                      <Label>견적서 및 일정표 첨부</Label>
-                                      <div className="mt-2">
-                                        <FileUpload
-                                          onFilesChange={setAdminFiles}
-                                          maxFiles={5}
-                                          maxSize={20}
-                                          acceptedTypes={[
-                                            'application/pdf',
-                                            'application/msword',
-                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                            'application/vnd.ms-excel',
-                                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                                            'image/*',
-                                            '.pdf', '.doc', '.docx', '.xls', '.xlsx'
-                                          ]}
-                                        />
-                                      </div>
-                                    </div>
-                                    
-                                    <Button
-                                      onClick={() => submitAdminResponse(selectedQuote.id)}
-                                      disabled={false} // Supabase 대신 Firebase 사용
-                                      className="w-full"
-                                    >
-                                      {/* Supabase 대신 Firebase 사용 */}
-                                      <>
-                                          <Send className="w-4 h-4 mr-2" />
-                                          고객에게 견적 전송
-                                        </>
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => sendEmailNotification(quote)}
+            {/* 견적 요청 관리 탭 */}
+            <TabsContent value="quotes" className="space-y-6">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Eye className="w-5 h-5" />
+                      견적 요청 목록 ({quoteRequests.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {quoteRequests.map((quote) => (
+                        <div
+                          key={quote.id}
+                          className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => setSelectedQuote(quote)}
                         >
-                          <Mail className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-medium text-gray-900">
+                                {quote.userName} - {quote.destination}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {quote.duration} • {quote.people}명
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(quote.createdAt).toLocaleDateString('ko-KR')}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(quote.status)}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedQuote(quote)
+                                }}
+                              >
+                                상세보기
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-          {filteredQuotes.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              {searchTerm || statusFilter !== 'all' 
-                ? '검색 결과가 없습니다.' 
-                : '아직 견적 요청이 없습니다.'
-              }
+            {/* 레퍼럴 시스템 탭 */}
+            <TabsContent value="referral" className="space-y-6">
+              {/* 전체 통계 */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">총 레퍼럴 코드</p>
+                        <p className="text-2xl font-bold">{referralStats?.totalCodes || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">총 사용 횟수</p>
+                        <p className="text-2xl font-bold">{referralStats?.totalUsages || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-purple-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">총 보상</p>
+                        <p className="text-2xl font-bold">{referralStats?.totalRewards || 0}원</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">승인된 보상</p>
+                        <p className="text-2xl font-bold">{referralStats?.approvedRewards || 0}원</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* 레퍼럴 코드 목록 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>레퍼럴 코드 관리</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {referralCodes.map((code) => (
+                      <div key={code.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{code.code}</h3>
+                            <p className="text-sm text-gray-600">
+                              {code.userName} ({code.userEmail})
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              사용 횟수: {code.usageCount} • 생성일: {new Date(code.createdAt).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={code.isActive ? "default" : "secondary"}>
+                              {code.isActive ? '활성' : '비활성'}
+                            </Badge>
+                            {code.isActive && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeactivateCode(code.id)}
+                              >
+                                비활성화
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 보상 관리 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>보상 관리</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {referralRewards.map((reward) => (
+                      <div key={reward.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{reward.userName}</h3>
+                            <p className="text-sm text-gray-600">
+                              {reward.description}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              금액: {reward.amount.toLocaleString()}원 • 
+                              생성일: {new Date(reward.createdAt).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={reward.status === 'approved' ? "default" : "secondary"}>
+                              {reward.status === 'approved' ? '승인됨' : '대기중'}
+                            </Badge>
+                            {reward.status !== 'approved' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveReward(reward.id)}
+                              >
+                                승인
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          {/* 견적 상세 모달 */}
+          {selectedQuote && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold">견적 요청 상세</h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedQuote(null)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">고객명</p>
+                      <p>{selectedQuote.userName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">이메일</p>
+                      <p>{selectedQuote.userEmail}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">여행지</p>
+                      <p>{selectedQuote.destination}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">여행 기간</p>
+                      <p>{selectedQuote.duration}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">참가 인원</p>
+                      <p>{selectedQuote.people}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">예산</p>
+                      <p>{selectedQuote.budget}</p>
+                    </div>
+                    {selectedQuote.startDate && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">출발 희망일</p>
+                        <p>{selectedQuote.startDate}</p>
+                      </div>
+                    )}
+                    {selectedQuote.requirements && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">추가 요청사항</p>
+                        <p className="whitespace-pre-wrap">{selectedQuote.requirements}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">연락 방법</p>
+                      <p>{selectedQuote.contactMethod === 'email' ? '이메일' : '카카오톡'}</p>
+                    </div>
+                    {selectedQuote.contactPhone && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">연락처</p>
+                        <p className="flex items-center gap-1">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          {selectedQuote.contactPhone}
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">첨부 파일</p>
+                      <div className="space-y-2">
+                        {selectedQuote.attachments.map((file, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownloadFile(file.url, file.name)}
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              {file.name}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">상태</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        {getStatusBadge(selectedQuote.status)}
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleStatusChange(selectedQuote.id!, 'approved')}
+                            disabled={selectedQuote.status === 'approved'}
+                          >
+                            승인
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange(selectedQuote.id!, 'rejected')}
+                            disabled={selectedQuote.status === 'rejected'}
+                          >
+                            거절
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
-  );
+  )
 } 

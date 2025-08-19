@@ -1,190 +1,191 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import UserSocialLogin from "@/components/UserSocialLogin";
-import Link from "next/link";
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { useAuth } from '@/hooks/useAuth'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Loader2, Gift, CheckCircle } from 'lucide-react'
+import UserSocialLogin from '@/components/UserSocialLogin'
+import ReferralCodeInput from '@/components/ReferralCodeInput'
+import { toast } from 'sonner'
 
-export default function UserSignup() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [error, setError] = useState('');
-  const router = useRouter();
+function SignupPageContent() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [referralCodeApplied, setReferralCodeApplied] = useState(false)
+  const [appliedReferralCode, setAppliedReferralCode] = useState('')
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
-      return;
+  const { user, signUp } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const hasReferralCode = searchParams.get('ref')
+  
+  // URL에서 레퍼럴 코드가 있으면 초기값으로 설정
+  if (hasReferralCode && !referralCodeApplied) {
+    setReferralCodeApplied(true)
+    setAppliedReferralCode(hasReferralCode)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.')
+      return
     }
 
-    if (formData.name && formData.email && formData.password) {
-      const userData = {
-        id: 'user-' + Date.now(),
-        name: formData.name,
-        nickname: formData.name,
-        email: formData.email,
-        loginType: 'email'
-      };
-
-      localStorage.setItem('userAuth', 'true');
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      alert('회원가입이 완료되었습니다! 환영합니다.');
-      router.push('/');
-    } else {
-      setError('모든 필드를 입력해주세요.');
+    if (password.length < 6) {
+      setError('비밀번호는 최소 6자 이상이어야 합니다.')
+      return
     }
-  };
 
-  const handleSocialSuccess = (user: any) => {
-    localStorage.setItem('userAuth', 'true');
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    alert('회원가입이 완료되었습니다! 환영합니다.');
-    router.push('/');
-  };
+    setLoading(true)
 
-  const handleSocialError = (error: any) => {
-    setError('소셜 회원가입에 실패했습니다. 다시 시도해주세요.');
-    console.error('소셜 회원가입 오류:', error);
-  };
+    try {
+      await signUp(email, password, displayName)
+      toast.success('회원가입이 완료되었습니다!')
+      router.push('/')
+    } catch (error: any) {
+      setError(error.message || '회원가입에 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleReferralCodeApplied = (code: string) => {
+    setReferralCodeApplied(true)
+    setAppliedReferralCode(code)
+    toast.success('레퍼럴 코드가 적용되었습니다! 가입 후 10,000원 할인을 받을 수 있습니다.')
+  }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F7F5EF" }}>
-      {/* 헤더 */}
-      <header className="bg-white shadow-sm border-b border-natural-beige">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "#2D5C4D" }}
-            >
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-gray-900">회원가입</CardTitle>
+          <CardDescription>
+            투어가이더 계정을 만들어보세요
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">이름</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder="홍길동"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+              />
             </div>
-            <div>
-              <span className="text-xl font-bold" style={{ color: "#3A3A3A" }}>
-                투어가이더
-              </span>
-              <p className="text-xs text-gray-500">tourguider.com</p>
+            <div className="space-y-2">
+              <Label htmlFor="email">이메일</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-          </Link>
-        </div>
-      </header>
+            <div className="space-y-2">
+              <Label htmlFor="password">비밀번호</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">비밀번호 확인</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-      {/* 회원가입 폼 */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold" style={{ color: "#3A3A3A" }}>
-              투어가이더 회원가입
-            </CardTitle>
-            <p className="text-sm text-gray-600 mt-2">
-              간편하게 가입하고 맞춤 여행을 시작하세요
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* 소셜 회원가입 버튼들 */}
-            <div className="space-y-3">
-              <UserSocialLogin provider="kakao" onSuccess={handleSocialSuccess} onError={handleSocialError} />
-              <UserSocialLogin provider="naver" onSuccess={handleSocialSuccess} onError={handleSocialError} />
-              <UserSocialLogin provider="google" onSuccess={handleSocialSuccess} onError={handleSocialError} />
-            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              회원가입
+            </Button>
+          </form>
 
-            <div className="relative">
-              <Separator />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="bg-white px-2 text-sm text-gray-500">또는 이메일로</span>
-              </div>
-            </div>
+          <UserSocialLogin mode="signup" />
 
-            {/* 이메일 회원가입 */}
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">이름</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="홍길동"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  required
-                />
+          {/* 레퍼럴 코드가 있는 경우 표시 */}
+          {(hasReferralCode || referralCodeApplied) && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Gift className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">친구 추천 혜택</span>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  required
+              {referralCodeApplied ? (
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-800">
+                      레퍼럴 코드 <strong>{appliedReferralCode}</strong>가 적용되었습니다! 가입 후 10,000원 할인을 받을 수 있습니다.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <ReferralCodeInput 
+                  variant="compact"
+                  showBenefits={false}
+                  onCodeApplied={handleReferralCodeApplied}
+                  initialCode={hasReferralCode || undefined}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="비밀번호를 입력하세요"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">비밀번호 확인</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="비밀번호를 다시 입력하세요"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                  required
-                />
-              </div>
-              {error && (
-                <div className="text-red-500 text-sm text-center">{error}</div>
               )}
-              <Button 
-                type="submit" 
-                className="w-full" 
-                style={{ backgroundColor: "#2D5C4D" }}
-              >
-                이메일로 회원가입
-              </Button>
-            </form>
-
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
-                이미 계정이 있으신가요?{' '}
-                <Link href="/login" className="text-natural-green font-medium hover:underline">
-                  로그인
-                </Link>
-              </p>
             </div>
+          )}
 
-            <div className="text-xs text-gray-500 text-center">
-              회원가입 시{' '}
-              <Link href="#" className="underline">이용약관</Link> 및{' '}
-              <Link href="#" className="underline">개인정보처리방침</Link>에 동의하게 됩니다.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="mt-6 text-center text-sm">
+            <span className="text-gray-600">이미 계정이 있으신가요? </span>
+            <Link href="/login" className="text-emerald-600 hover:text-emerald-700 font-medium">
+              로그인하기
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  );
-} 
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <SignupPageContent />
+    </Suspense>
+  )
+}
