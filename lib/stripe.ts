@@ -1,8 +1,10 @@
 import Stripe from 'stripe'
 
-// Stripe 인스턴스 생성
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+// Stripe 인스턴스 생성 (환경 변수가 없으면 임시 키 사용)
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_fake_key_for_build'
+
+export const stripe = new Stripe(stripeKey, {
+  apiVersion: '2025-06-30.basil',
   typescript: true,
 })
 

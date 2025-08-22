@@ -24,6 +24,7 @@ interface Quote {
   endDate: string;
   adults: number;
   children: number;
+  infants?: number;
   budget: string;
   name: string;
   phone: string;
@@ -37,6 +38,9 @@ interface Quote {
   adminFiles?: string[];
   responseDate?: string;
   userId?: string;
+  airline?: string;
+  hotel?: string;
+  travelStyle?: string[];
 }
 
 interface AdminSession {
@@ -309,9 +313,9 @@ export default function AdminPage() {
         quote.infants,
         quote.airline || '',
         quote.hotel || '',
-        quote.travelStyle.join(';'),
+        (quote.travelStyle || []).join(';'),
         quote.budget || '',
-        quote.requests || '',
+        quote.requirements || '',
         quote.notes || ''
       ].join(','))
     ].join('\n');
@@ -332,9 +336,9 @@ export default function AdminPage() {
       // 로그아웃 로그
       console.log('관리자 로그아웃:', {
         // Supabase 대신 Firebase 사용자 정보 로드
-        username: JSON.parse(localStorage.getItem('adminUser') || '{}').nickname || 'unknown',
+        username: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('adminUser') || '{}').nickname || 'unknown' : 'unknown',
         timestamp: new Date().toISOString(),
-        sessionId: JSON.parse(localStorage.getItem('adminUser') || '{}').uid || 'unknown'
+        sessionId: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('adminUser') || '{}').uid || 'unknown' : 'unknown'
       });
 
       localStorage.removeItem('adminAuth');
@@ -351,7 +355,7 @@ export default function AdminPage() {
   };
 
   // Supabase 대신 Firebase 사용
-  const isAuthenticated = localStorage.getItem('adminAuth') !== null;
+  const isAuthenticated = typeof window !== 'undefined' ? localStorage.getItem('adminAuth') !== null : false;
 
   if (!isAuthenticated) {
     return <div>인증 확인 중...</div>;
@@ -387,7 +391,7 @@ export default function AdminPage() {
               {/* 세션 정보 */}
               <div className="text-right text-sm">
                 <p className={`font-medium ${timeRemaining < 300 ? 'text-red-600' : 'text-green-600'}`}>
-                  세션: {formatSessionTime(parseInt(timeRemaining))}
+                  세션: {formatSessionTime(timeRemaining)}
                 </p>
                 <p className="text-xs text-gray-500">
                   {timeRemaining < 300 ? '곧 만료됩니다' : '정상'}
@@ -399,13 +403,13 @@ export default function AdminPage() {
                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                   <span className="text-red-600 font-bold text-xs">
                     {/* Supabase 대신 Firebase 사용자 정보 로드 */}
-                    {JSON.parse(localStorage.getItem('adminUser') || '{}').nickname?.charAt(0) || 'A'}
+                    {typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('adminUser') || '{}').nickname?.charAt(0) || 'A' : 'A'}
                   </span>
                 </div>
                 <div className="text-right">
                   <p className="font-medium">
                     {/* Supabase 대신 Firebase 사용자 정보 로드 */}
-                    {JSON.parse(localStorage.getItem('adminUser') || '{}').nickname || '관리자'}
+                    {typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('adminUser') || '{}').nickname || '관리자' : '관리자'}
                   </p>
                   <p className="text-gray-500 text-xs flex items-center gap-1">
                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -504,7 +508,7 @@ export default function AdminPage() {
                     <TableCell>
                       성인 {quote.adults}명
                       {quote.children > 0 && `, 아동 ${quote.children}명`}
-                      {quote.infants > 0 && `, 유아 ${quote.infants}명`}
+                      {(quote.infants || 0) > 0 && `, 유아 ${quote.infants}명`}
                     </TableCell>
                     <TableCell>{quote.budget || '-'}</TableCell>
                     <TableCell>
@@ -558,7 +562,7 @@ export default function AdminPage() {
                                     <p className="font-medium">
                                       성인 {selectedQuote.adults}명
                                       {selectedQuote.children > 0 && `, 아동 ${selectedQuote.children}명`}
-                                      {selectedQuote.infants > 0 && `, 유아 ${selectedQuote.infants}명`}
+                                      {(selectedQuote.infants || 0) > 0 && `, 유아 ${selectedQuote.infants}명`}
                                     </p>
                                   </div>
                                   <div>
@@ -572,7 +576,7 @@ export default function AdminPage() {
                                   <div>
                                     <Label>여행 스타일</Label>
                                     <div className="flex flex-wrap gap-1">
-                                      {selectedQuote.travelStyle.map((style, index) => (
+                                      {(selectedQuote.travelStyle || []).map((style, index) => (
                                         <Badge key={index} variant="outline" className="text-xs">
                                           {style}
                                         </Badge>
@@ -587,7 +591,7 @@ export default function AdminPage() {
                                 <div>
                                   <Label>요청사항</Label>
                                   <p className="mt-1 p-3 bg-gray-50 rounded-md">
-                                    {selectedQuote.requests || '없음'}
+                                    {selectedQuote.requirements || '없음'}
                                   </p>
                                 </div>
                                 
