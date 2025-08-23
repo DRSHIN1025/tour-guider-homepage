@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import UserSocialLogin from "@/components/UserSocialLogin";
 import Link from "next/link";
+import { MapPin } from "lucide-react";
+import { designSystem, commonClasses } from "@/lib/design-system";
 
 export default function UserLogin() {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -53,43 +55,50 @@ export default function UserLogin() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F7F5EF" }}>
-      {/* 헤더 */}
-      <header className="bg-white shadow-sm border-b border-natural-beige">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "#2D5C4D" }}
-            >
-              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <span className="text-xl font-bold" style={{ color: "#3A3A3A" }}>
-                투어가이더
-              </span>
-              <p className="text-xs text-gray-500">tourguider.com</p>
-            </div>
-          </Link>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 via-teal-50/20 to-purple-50/30">
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
+        <div className={commonClasses.container}>
+          <div className="flex items-center justify-between h-20">
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 via-teal-500 to-purple-600 flex items-center justify-center">
+                <MapPin className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 bg-clip-text text-transparent">
+                  K-BIZ TRAVEL
+                </div>
+                <div className="text-sm text-gray-500">동남아 특화 맞춤여행</div>
+              </div>
+            </Link>
+            
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="/about" className="text-gray-600 hover:text-emerald-600 transition-colors font-medium">회사소개</Link>
+              <Link href="/quote" className="text-gray-600 hover:text-emerald-600 transition-colors font-medium">견적 요청</Link>
+              <Link href="/reviews" className="text-gray-600 hover:text-emerald-600 transition-colors font-medium">여행 후기</Link>
+              <Link href="/admin" className="text-gray-600 hover:text-emerald-600 transition-colors font-medium">관리자</Link>
+            </nav>
+          </div>
         </div>
       </header>
 
       {/* 로그인 폼 */}
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold" style={{ color: "#3A3A3A" }}>
-              투어가이더 로그인
+        <Card className="w-full max-w-lg shadow-2xl border-0">
+          <CardHeader className="text-center pb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <MapPin className="w-10 h-10 text-emerald-600" />
+            </div>
+            <CardTitle className="text-4xl font-bold text-gray-900 mb-6">
+              K-BIZ TRAVEL 로그인
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-xl text-gray-600">
               간편하게 로그인하고 맞춤 여행을 시작하세요
             </p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 px-8 pb-8">
             {/* 소셜 로그인 버튼들 */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <UserSocialLogin provider="kakao" onSuccess={handleSocialSuccess} onError={handleSocialError} />
               <UserSocialLogin provider="naver" onSuccess={handleSocialSuccess} onError={handleSocialError} />
               <UserSocialLogin provider="google" onSuccess={handleSocialSuccess} onError={handleSocialError} />
@@ -103,26 +112,28 @@ export default function UserLogin() {
             </div>
 
             {/* 이메일 로그인 */}
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-lg font-medium">이메일</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="example@email.com"
                   value={credentials.email}
                   onChange={(e) => setCredentials({...credentials, email: e.target.value})}
+                  className="h-14 text-lg"
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
+              <div className="space-y-3">
+                <Label htmlFor="password" className="text-lg font-medium">비밀번호</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="비밀번호를 입력하세요"
                   value={credentials.password}
                   onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                  className="h-14 text-lg"
                   required
                 />
               </div>
@@ -131,30 +142,29 @@ export default function UserLogin() {
               )}
               <Button 
                 type="submit" 
-                className="w-full" 
-                style={{ backgroundColor: "#2D5C4D" }}
+                className="w-full h-16 text-xl font-semibold bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700" 
               >
                 이메일로 로그인
               </Button>
             </form>
 
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
+            <div className="text-center space-y-3">
+              <p className="text-base text-gray-600">
                 아직 계정이 없으신가요?{' '}
-                <Link href="/signup" className="text-natural-green font-medium hover:underline">
+                <Link href="/signup" className="text-emerald-600 font-semibold hover:underline text-lg">
                   회원가입
                 </Link>
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm text-gray-500">
                 <Link href="/admin/login" className="hover:underline">
                   관리자 로그인
                 </Link>
               </p>
             </div>
 
-            <div className="mt-6 p-4 bg-green-50 rounded-lg">
-              <h4 className="font-medium text-sm mb-2">🎉 소셜 로그인 혜택:</h4>
-              <div className="text-xs text-gray-600 space-y-1">
+            <div className="mt-8 p-8 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl">
+              <h4 className="font-semibold text-base mb-3">🎉 소셜 로그인 혜택:</h4>
+              <div className="text-sm text-gray-600 space-y-2">
                 <p>• 간편한 원클릭 로그인</p>
                 <p>• 개인 맞춤 여행 추천</p>
                 <p>• 견적 요청 이력 관리</p>

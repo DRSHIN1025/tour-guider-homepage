@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { designSystem, commonClasses } from "@/lib/design-system";
 
@@ -98,6 +99,7 @@ export default function HomePage() {
               <Link href="/about" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">회사소개</Link>
               <Link href="/quote" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">견적 요청</Link>
               <Link href="/reviews" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">여행 후기</Link>
+              <Link href="/referral" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">레퍼럴</Link>
               <Link href="/admin" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">관리자</Link>
             </nav>
 
@@ -116,67 +118,32 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center bg-gradient-to-br from-blue-50 via-white to-green-50 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
+      <section className="relative min-h-[42vh] flex items-center bg-gradient-to-br from-emerald-400 via-teal-500 to-purple-600 overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className={commonClasses.container + " relative z-10"}>
-          <div className="max-w-4xl mx-auto text-center">
-            <Badge className="mb-6 bg-blue-100 text-blue-700 px-4 py-2 text-sm font-medium">
+          <div className="max-w-5xl mx-auto text-center">
+            <Badge className="mb-6 bg-white/20 text-white border-white/30 px-6 py-3 text-sm font-medium backdrop-blur-sm">
               🌟 동남아 여행 전문 플랫폼
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
-              맞춤형 여행<br />
-              <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                전문가와 함께
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white">
+              맞춤형 여행의<br />
+              <span className="bg-gradient-to-r from-yellow-200 to-white bg-clip-text text-transparent">
+                새로운 경험
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed max-w-3xl mx-auto">
-              동남아 현지 전문가들이 직접 제안하는 맞춤 여행 일정을 받아보세요.<br />
-              여러 견적을 비교하고 가장 마음에 드는 여행을 선택하세요.
+            <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-3xl mx-auto">
+              K-BIZ TRAVEL과 함께 동남아의 숨겨진 보석같은 여행지를 발견하세요.<br />
+              현지 전문가가 직접 설계하는 맞춤형 여행 일정을 경험해보세요.
             </p>
 
-            {/* Quick Quote Form */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gray-100 mb-12">
-              <div className="grid md:grid-cols-4 gap-4 mb-8">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">여행지</label>
-                  <input 
-                    type="text" 
-                    placeholder="예: 태국 방콕" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">여행 기간</label>
-                  <input 
-                    type="text" 
-                    placeholder="예: 5박 6일" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">인원</label>
-                  <input 
-                    type="text" 
-                    placeholder="예: 성인 2명" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">예산</label>
-                  <input 
-                    type="text" 
-                    placeholder="예: 200만원" 
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-              </div>
-              
+            <div className="mb-12">
               <Link href="/quote">
                 <Button 
                   size="lg" 
-                  className="w-full md:w-auto px-12 py-4 text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  className="px-12 py-4 text-xl font-bold bg-white text-purple-600 hover:bg-gray-50 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
                 >
                   <Sparkles className="mr-3 w-6 h-6" />
                   무료 견적 요청하기
@@ -186,24 +153,24 @@ export default function HomePage() {
             </div>
 
             {/* Stats */}
-            <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">1,000+</div>
-                <div className="text-gray-600 font-medium">현지 가이드</div>
+            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-3xl font-bold text-white mb-2">1,000+</div>
+                <div className="text-white/90 font-medium">현지 전문가</div>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-green-600 mb-2 flex items-center justify-center">
-                  <Star className="w-8 h-8 text-yellow-400 mr-2 fill-current" />
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-3xl font-bold text-white mb-2 flex items-center justify-center">
+                  <Star className="w-7 h-7 text-yellow-300 mr-2 fill-current" />
                   4.9/5.0
                 </div>
-                <div className="text-gray-600 font-medium">평점</div>
+                <div className="text-white/90 font-medium">고객 만족도</div>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2 flex items-center justify-center">
-                  <Shield className="w-8 h-8 text-green-500 mr-2" />
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-3xl font-bold text-white mb-2 flex items-center justify-center">
+                  <Shield className="w-7 h-7 text-green-300 mr-2" />
                   100%
                 </div>
-                <div className="text-gray-600 font-medium">여행 안전 보장</div>
+                <div className="text-white/90 font-medium">여행 안전 보장</div>
               </div>
             </div>
           </div>
@@ -213,7 +180,7 @@ export default function HomePage() {
       {/* Popular Destinations */}
       <section className="py-24 bg-gray-50">
         <div className={commonClasses.container}>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">인기 여행지</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               K-BIZ 가이드들이 추천하는 동남아 베스트 여행지
@@ -221,15 +188,48 @@ export default function HomePage() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* 태국 방콕 파타야 */}
             <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Plane className="w-8 h-8 text-white" />
+              <div className="relative h-64 overflow-hidden">
+                <Image 
+                  src="/images/destinations/thailand-bangkok.svg"
+                  alt="태국 방콕 파타야"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) {
+                      nextElement.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 transition-all duration-500 items-center justify-center" 
+                  style={{ display: 'none' }}
+                >
+                  <div className="text-center text-white">
+                    <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-4">
+                      <Plane className="w-12 h-12 text-white" />
+                    </div>
+                    <div className="text-lg font-semibold">태국 방콕 파타야</div>
+                  </div>
                 </div>
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Plane className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <CardContent className="p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">태국 방콕 파타야</h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">방콕의 화려한 야경과 파타야의 아름다운 해변을 모두 즐기는 완벽한 조합</p>
                 <div className="flex items-center justify-between">
-                  <Badge className="bg-green-100 text-green-700 font-medium">인기 1위</Badge>
+                  <div className="text-sm text-gray-500">4박 5일 패키지</div>
                   <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
                     자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -237,15 +237,48 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
+            {/* 베트남 하롱베이 */}
             <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Mountain className="w-8 h-8 text-white" />
+              <div className="relative h-64 overflow-hidden">
+                <Image 
+                  src="/images/destinations/vietnam-halong.svg"
+                  alt="베트남 하롱베이"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) {
+                      nextElement.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 bg-gradient-to-br from-green-600 via-green-700 to-green-800 transition-all duration-500 items-center justify-center"
+                  style={{ display: 'none' }}
+                >
+                  <div className="text-center text-white">
+                    <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-4">
+                      <Mountain className="w-12 h-12 text-white" />
+                    </div>
+                    <div className="text-lg font-semibold">베트남 하롱베이</div>
+                  </div>
                 </div>
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Mountain className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <CardContent className="p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">베트남 하노이 하롱베이</h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">신비로운 하롱베이 크루즈와 하노이 올드쿼터의 매력적인 문화 체험</p>
                 <div className="flex items-center justify-between">
-                  <Badge className="bg-blue-100 text-blue-700 font-medium">인기 2위</Badge>
+                  <div className="text-sm text-gray-500">3박 4일 패키지</div>
                   <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
                     자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -253,15 +286,48 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
+            {/* 인도네시아 발리 */}
             <Card className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden">
-              <CardContent className="p-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Camera className="w-8 h-8 text-white" />
+              <div className="relative h-64 overflow-hidden">
+                <Image 
+                  src="/images/destinations/indonesia-bali.svg"
+                  alt="인도네시아 발리"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (nextElement) {
+                      nextElement.style.display = 'flex';
+                    }
+                  }}
+                />
+                <div 
+                  className="absolute inset-0 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 transition-all duration-500 items-center justify-center"
+                  style={{ display: 'none' }}
+                >
+                  <div className="text-center text-white">
+                    <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-4">
+                      <Camera className="w-12 h-12 text-white" />
+                    </div>
+                    <div className="text-lg font-semibold">인도네시아 발리</div>
+                  </div>
                 </div>
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Camera className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <CardContent className="p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">인도네시아 발리</h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">발리의 신성한 사원과 인스타그램에서 핫한 포토스팟들의 완벽한 만남</p>
                 <div className="flex items-center justify-between">
-                  <Badge className="bg-purple-100 text-purple-700 font-medium">인기 3위</Badge>
+                  <div className="text-sm text-gray-500">5박 6일 패키지</div>
                   <Button variant="ghost" size="sm" className="text-blue-600 hover:bg-blue-50">
                     자세히 보기 <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -273,9 +339,9 @@ export default function HomePage() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-24 bg-white">
+      <section className="py-16 bg-white">
         <div className={commonClasses.container}>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               왜 K-BIZ TRAVEL을 선택해야 할까요?
             </h2>
@@ -322,16 +388,16 @@ export default function HomePage() {
       </section>
 
       {/* Customer Reviews - Rotating Carousel */}
-      <section className="py-24 bg-gradient-to-br from-blue-50 to-green-50">
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-green-50">
         <div className={commonClasses.container}>
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">고객 후기</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               K-BIZ TRAVEL과 함께한 특별한 여행 이야기
             </p>
           </div>
 
-          <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-2xl mx-auto">
             <div className="overflow-hidden rounded-3xl">
               <div 
                 className="flex transition-transform duration-500 ease-in-out"
@@ -346,7 +412,7 @@ export default function HomePage() {
                         ))}
                       </div>
                       
-                      <blockquote className="text-xl md:text-2xl text-gray-700 mb-8 leading-relaxed italic">
+                      <blockquote className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed italic">
                         "{testimonial.content}"
                       </blockquote>
                       
@@ -406,10 +472,10 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 relative overflow-hidden">
+      <section className="py-16 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className={commonClasses.container + " relative z-10"}>
-          <div className="text-center text-white mb-16">
+          <div className="text-center text-white mb-12">
             <h2 className="text-4xl md:text-6xl font-bold mb-6">
               지금 바로 특별한 여행을 시작하세요
             </h2>
@@ -419,7 +485,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
             <Card className="bg-white/95 backdrop-blur-sm border-0 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
               <CardContent className="p-8 text-center space-y-6">
                 <div className="w-20 h-20 rounded-3xl bg-yellow-100 flex items-center justify-center mx-auto">
@@ -473,9 +539,9 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-20">
+      <footer className="bg-gray-900 text-white py-14">
         <div className={commonClasses.container}>
-          <div className="grid md:grid-cols-4 gap-12 mb-16">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center">
@@ -500,7 +566,7 @@ export default function HomePage() {
                 <Link href="/quote" className="block hover:text-blue-400 transition-colors">맞춤 견적 요청</Link>
                 <Link href="/reviews" className="block hover:text-blue-400 transition-colors">여행 후기</Link>
                 <Link href="/about" className="block hover:text-blue-400 transition-colors">회사 소개</Link>
-                <Link href="#" className="block hover:text-blue-400 transition-colors">가이드 찾기</Link>
+                <Link href="/referral" className="block hover:text-blue-400 transition-colors">레퍼럴 시스템</Link>
               </div>
             </div>
 

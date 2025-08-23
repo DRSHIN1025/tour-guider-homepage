@@ -14,7 +14,20 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     // Firebase를 위해 매우 관대한 CSP 설정
     contentSecurityPolicy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; object-src 'none';",
-    domains: ['tourguider.com', 'firebasestorage.googleapis.com', 'googleapis.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'tourguider.com',
+      },
+      {
+        protocol: 'https', 
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'googleapis.com',
+      }
+    ],
   },
 
   // 압축 설정

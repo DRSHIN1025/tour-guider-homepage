@@ -67,38 +67,47 @@ export default function AboutPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-24 bg-gradient-to-br from-blue-50 via-white to-green-50 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
+      <section className="py-16 bg-gradient-to-br from-emerald-400 via-teal-500 to-purple-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className={commonClasses.container + " relative z-10"}>
           <div className="max-w-5xl mx-auto text-center">
-            <Badge className="mb-6 bg-blue-100 text-blue-700 px-4 py-2 text-sm font-medium">
-              🏢 회사 소개
+            <Badge className="mb-6 bg-white/20 text-white border-white/30 px-6 py-3 text-sm font-medium backdrop-blur-sm">
+              🏢 K-BIZ TRAVEL CORP.
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight text-gray-900">
-              동남아 여행의<br />
-              <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                새로운 기준을 만듭니다
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white">
+              합리적인 비용, 맞춤형 서비스<br />
+              <span className="bg-gradient-to-r from-yellow-200 to-white bg-clip-text text-transparent">
+                차별화된 프로그램, 완성되는 트렌드
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed max-w-4xl mx-auto">
-              K-BIZ TRAVEL은 현지 전문가들과 직접 연결하여<br />
-              진정한 맞춤 여행 경험을 제공하는 동남아 특화 여행 플랫폼입니다.
+            <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-4xl mx-auto">
+              K-BIZ TRAVEL은 2023년 7월 설립된 종합여행업 전문기업으로<br />
+              해외 출장업무 지원, 항공 예약 및 여행상품 개발, 인바운드 관광객 유치를 전문으로 합니다.
             </p>
             
-            <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-              <div className="flex items-center justify-center space-x-3 text-gray-600">
-                <Calendar className="w-6 h-6 text-blue-600" />
-                <span className="font-semibold">설립 2020년</span>
+            <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <Calendar className="w-6 h-6 text-white mx-auto mb-2" />
+                <div className="text-white font-semibold">설립 2023.07</div>
+                <div className="text-white/80 text-sm">법인 독립</div>
               </div>
-              <div className="flex items-center justify-center space-x-3 text-gray-600">
-                <Globe className="w-6 h-6 text-green-600" />
-                <span className="font-semibold">동남아 5개국</span>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <Building className="w-6 h-6 text-white mx-auto mb-2" />
+                <div className="text-white font-semibold">종합여행업</div>
+                <div className="text-white/80 text-sm">793-81-03224</div>
               </div>
-              <div className="flex items-center justify-center space-x-3 text-gray-600">
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
-                <span className="font-semibold">고객만족도 98%</span>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <Users className="w-6 h-6 text-white mx-auto mb-2" />
+                <div className="text-white font-semibold">700명 전세기</div>
+                <div className="text-white/80 text-sm">대규모 투어</div>
+              </div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                <Globe className="w-6 h-6 text-white mx-auto mb-2" />
+                <div className="text-white font-semibold">창원시청</div>
+                <div className="text-white/80 text-sm">공무지원</div>
               </div>
             </div>
           </div>
@@ -124,11 +133,11 @@ export default function AboutPage() {
                 <div className="space-y-6">
                   <h3 className="text-3xl font-bold text-gray-900">미션</h3>
                   <p className="text-lg text-gray-600 leading-relaxed">
-                    현지 전문가와 여행객을 직접 연결하여
+                    합리적인 비용으로 <strong className="text-blue-600">맞춤형 서비스</strong>를 제공하여
                     <br />
-                    <strong className="text-blue-600">진정한 맞춤 여행 경험</strong>을 제공하고,
+                    고객의 다양한 요구에 부응하는 차별화된 프로그램으로
                     <br />
-                    모든 여행이 안전하고 특별한 추억이 되도록 돕습니다.
+                    완성되는 트렌드를 만들어나갑니다.
                   </p>
                 </div>
               </CardContent>
@@ -142,11 +151,11 @@ export default function AboutPage() {
                 <div className="space-y-6">
                   <h3 className="text-3xl font-bold text-gray-900">비전</h3>
                   <p className="text-lg text-gray-600 leading-relaxed">
-                    아시아 최고의 현지 전문가 플랫폼이 되어
+                    해외 출장업무 지원, 항공 예약 및 여행상품 개발,
                     <br />
-                    <strong className="text-green-600">여행의 새로운 패러다임</strong>을 만들고,
+                    <strong className="text-green-600">인바운드 관광객 유치</strong>를 전문으로 하는
                     <br />
-                    전 세계 여행객들의 꿈을 현실로 만드는 회사가 되겠습니다.
+                    동남아시아 최고의 종합여행업체가 되겠습니다.
                   </p>
                 </div>
               </CardContent>
@@ -232,7 +241,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <Card className="bg-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
               <CardContent className="p-8 text-center">
-                <div className="text-5xl font-bold text-blue-600 mb-4">1,000+</div>
+                <div className="text-5xl font-bold text-blue-600 mb-4">50+</div>
                 <p className="text-xl font-semibold text-gray-700">검증된 현지 전문가</p>
                 <p className="text-gray-500 mt-2">철저한 검증을 통과한 가이드</p>
               </CardContent>
@@ -240,7 +249,7 @@ export default function AboutPage() {
 
             <Card className="bg-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
               <CardContent className="p-8 text-center">
-                <div className="text-5xl font-bold text-green-600 mb-4">5,000+</div>
+                <div className="text-5xl font-bold text-green-600 mb-4">200+</div>
                 <p className="text-xl font-semibold text-gray-700">성공한 여행</p>
                 <p className="text-gray-500 mt-2">만족스러운 여행 경험 제공</p>
               </CardContent>
@@ -248,7 +257,7 @@ export default function AboutPage() {
 
             <Card className="bg-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
               <CardContent className="p-8 text-center">
-                <div className="text-5xl font-bold text-yellow-500 mb-4">98%</div>
+                <div className="text-5xl font-bold text-yellow-500 mb-4">95%</div>
                 <p className="text-xl font-semibold text-gray-700">고객 만족도</p>
                 <p className="text-gray-500 mt-2">높은 수준의 서비스 품질</p>
               </CardContent>
@@ -441,9 +450,9 @@ export default function AboutPage() {
             <p className="text-gray-400">
               &copy; 2024 K-BIZ TRAVEL CORP. All rights reserved.
               <span className="mx-2">|</span>
-              사업자등록번호: 123-45-67890
+              사업자등록번호: 793-81-03224
               <span className="mx-2">|</span>
-              통신판매업신고: 제2024-서울강남-1234호
+              종합여행업 등록
             </p>
           </div>
         </div>

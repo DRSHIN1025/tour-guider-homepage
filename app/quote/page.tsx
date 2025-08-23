@@ -23,7 +23,10 @@ import {
   Globe,
   Star,
   ArrowLeft,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  X,
+  FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -49,7 +52,11 @@ export default function QuotePage() {
     email: user?.email || '',
     name: user?.displayName || '',
     travelStyle: '',
-    accommodation: ''
+    accommodation: '',
+    preferredAirline: '',
+    hotelGrade: '',
+    attachedFiles: [] as File[],
+    referralCode: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,6 +116,49 @@ export default function QuotePage() {
     }));
   };
 
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files) return;
+    
+    const validTypes = [
+      'application/vnd.hancom.hwp',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf'
+    ];
+
+    const newFiles = Array.from(files).filter(file => {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast.error(`${file.name}은(는) 파일 크기가 너무 큽니다. (최대 10MB)`);
+        return false;
+      }
+      
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(hwp|doc|docx|ppt|pptx|jpg|jpeg|png|gif|webp|pdf)$/i)) {
+        toast.error(`${file.name}은(는) 지원하지 않는 파일 형식입니다.`);
+        return false;
+      }
+      
+      return true;
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      attachedFiles: [...prev.attachedFiles, ...newFiles]
+    }));
+  };
+
+  const removeFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      attachedFiles: prev.attachedFiles.filter((_, i) => i !== index)
+    }));
+  };
+
   const nextStep = () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
@@ -129,11 +179,11 @@ export default function QuotePage() {
           <div className={commonClasses.container}>
             <div className="flex items-center justify-between h-20">
               <Link href="/" className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-green-600 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 via-teal-500 to-purple-600 flex items-center justify-center">
                   <MapPin className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                  <div className="text-2xl font-bold bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 bg-clip-text text-transparent">
                     K-BIZ TRAVEL
                   </div>
                   <div className="text-sm text-gray-500">동남아 특화 맞춤여행</div>
@@ -161,7 +211,7 @@ export default function QuotePage() {
           </div>
         </header>
 
-        <div className="py-24 bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="py-16 bg-gradient-to-br from-emerald-50/30 via-teal-50/20 to-purple-50/30">
           <div className={commonClasses.container}>
             <div className="max-w-2xl mx-auto text-center">
               <Card className="bg-white shadow-2xl border-0">
@@ -183,7 +233,7 @@ export default function QuotePage() {
                       </Button>
                     </Link>
                     <Link href="/dashboard">
-                      <Button size="lg" className="px-8 py-3 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
+                      <Button size="lg" className="px-8 py-3 bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700">
                         내 견적 확인하기
                       </Button>
                     </Link>
@@ -236,16 +286,16 @@ export default function QuotePage() {
         </div>
       </header>
 
-      <div className="py-24 bg-gradient-to-br from-blue-50 via-white to-green-50">
+      <div className="py-16 bg-gradient-to-br from-emerald-50/30 via-teal-50/20 to-purple-50/30">
         <div className={commonClasses.container}>
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="text-center mb-12">
-              <Badge className="mb-6 bg-blue-100 text-blue-700 px-4 py-2 text-sm font-medium">
+              <Badge className="mb-6 bg-emerald-100 text-emerald-700 px-4 py-2 text-sm font-medium">
                 ✈️ 맞춤 견적 요청
               </Badge>
               <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-                <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 bg-clip-text text-transparent">
                   나만의 특별한 여행
                 </span>
                 <br />
@@ -316,57 +366,41 @@ export default function QuotePage() {
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           여행지 <span className="text-red-500">*</span>
                         </label>
-                        <Select onValueChange={(value) => handleInputChange('destination', value)}>
-                          <SelectTrigger className="h-14 text-lg border-gray-200">
-                            <SelectValue placeholder="여행지를 선택해주세요" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="thailand">🇹🇭 태국 (방콕, 파타야, 치앙마이)</SelectItem>
-                            <SelectItem value="vietnam">🇻🇳 베트남 (하노이, 호치민, 다낭)</SelectItem>
-                            <SelectItem value="philippines">🇵🇭 필리핀 (마닐라, 세부, 보라카이)</SelectItem>
-                            <SelectItem value="indonesia">🇮🇩 인도네시아 (발리, 자카르타, 롬복)</SelectItem>
-                            <SelectItem value="cambodia">🇰🇭 캄보디아 (시엠립, 프놈펜)</SelectItem>
-                            <SelectItem value="other">기타 (상담 시 협의)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          value={formData.destination}
+                          onChange={(e) => handleInputChange('destination', e.target.value)}
+                          placeholder="예: 태국 방콕, 베트남 다낭, 인도네시아 발리"
+                          className="h-14 text-lg border-gray-200"
+                          required
+                        />
                       </div>
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           여행 기간 <span className="text-red-500">*</span>
                         </label>
-                        <Select onValueChange={(value) => handleInputChange('duration', value)}>
-                          <SelectTrigger className="h-14 text-lg border-gray-200">
-                            <SelectValue placeholder="여행 기간을 선택해주세요" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="2박3일">2박 3일</SelectItem>
-                            <SelectItem value="3박4일">3박 4일</SelectItem>
-                            <SelectItem value="4박5일">4박 5일</SelectItem>
-                            <SelectItem value="5박6일">5박 6일</SelectItem>
-                            <SelectItem value="6박7일">6박 7일</SelectItem>
-                            <SelectItem value="7박8일">7박 8일</SelectItem>
-                            <SelectItem value="장기">1주일 이상</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          value={formData.duration}
+                          onChange={(e) => handleInputChange('duration', e.target.value)}
+                          placeholder="예: 4박 5일, 5박 6일"
+                          className="h-14 text-lg border-gray-200"
+                          required
+                        />
                       </div>
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           여행 인원 <span className="text-red-500">*</span>
                         </label>
-                        <Select onValueChange={(value) => handleInputChange('people', value)}>
-                          <SelectTrigger className="h-14 text-lg border-gray-200">
-                            <SelectValue placeholder="여행 인원을 선택해주세요" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1명">혼자 여행 (1명)</SelectItem>
-                            <SelectItem value="2명">커플/친구 (2명)</SelectItem>
-                            <SelectItem value="3-4명">소규모 그룹 (3-4명)</SelectItem>
-                            <SelectItem value="5-8명">중규모 그룹 (5-8명)</SelectItem>
-                            <SelectItem value="9명이상">대규모 그룹 (9명 이상)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          type="number"
+                          value={formData.people}
+                          onChange={(e) => handleInputChange('people', e.target.value)}
+                          placeholder="숫자로 입력 (예: 2, 4, 10)"
+                          className="h-14 text-lg border-gray-200"
+                          min="1"
+                          required
+                        />
                       </div>
 
                       <div>
@@ -406,7 +440,7 @@ export default function QuotePage() {
                         type="button"
                         onClick={nextStep}
                         size="lg"
-                        className="px-12 py-4 text-lg bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                        className="px-12 py-4 text-lg bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700"
                         disabled={!formData.destination || !formData.duration || !formData.people}
                       >
                         다음 단계
@@ -466,6 +500,37 @@ export default function QuotePage() {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          선호 항공사
+                        </label>
+                        <Input
+                          value={formData.preferredAirline}
+                          onChange={(e) => handleInputChange('preferredAirline', e.target.value)}
+                          placeholder="예: 대한항공, 아시아나, 에어부산"
+                          className="h-14 text-lg border-gray-200"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          호텔 등급 선호도
+                        </label>
+                        <Select onValueChange={(value) => handleInputChange('hotelGrade', value)}>
+                          <SelectTrigger className="h-14 text-lg border-gray-200">
+                            <SelectValue placeholder="호텔 등급을 선택해주세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5성급">⭐⭐⭐⭐⭐ 5성급 럭셔리</SelectItem>
+                            <SelectItem value="4성급">⭐⭐⭐⭐ 4성급 프리미엄</SelectItem>
+                            <SelectItem value="3성급">⭐⭐⭐ 3성급 스탠다드</SelectItem>
+                            <SelectItem value="부티크">🏛️ 부티크 호텔</SelectItem>
+                            <SelectItem value="리조트">🏖️ 리조트 중심</SelectItem>
+                            <SelectItem value="상관없음">🤷‍♂️ 상관없음</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     <div>
@@ -484,6 +549,76 @@ export default function QuotePage() {
                       </p>
                     </div>
 
+                    {/* 파일 첨부 */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        참고 자료 첨부 (선택사항)
+                      </label>
+                      
+                      {/* 드래그 앤 드롭 영역 */}
+                      <div 
+                        className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-emerald-400 transition-colors"
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          handleFileUpload(e.dataTransfer.files);
+                        }}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDragEnter={(e) => e.preventDefault()}
+                      >
+                        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-lg text-gray-600 mb-2">
+                          파일을 여기로 드래그하거나 클릭하여 업로드
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          HWP, DOC, PPT, 이미지 파일 지원 (최대 10MB)
+                        </p>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".hwp,.doc,.docx,.ppt,.pptx,.pdf,.jpg,.jpeg,.png,.gif,.webp"
+                          onChange={(e) => handleFileUpload(e.target.files)}
+                          className="hidden"
+                          id="file-upload"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('file-upload')?.click()}
+                          className="border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          파일 선택
+                        </Button>
+                      </div>
+
+                      {/* 첨부된 파일 목록 */}
+                      {formData.attachedFiles.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-semibold text-gray-700">첨부된 파일:</p>
+                          {formData.attachedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <FileText className="w-5 h-5 text-gray-500" />
+                                <span className="text-sm text-gray-700">{file.name}</span>
+                                <span className="text-xs text-gray-500">
+                                  ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeFile(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-between pt-8">
                       <Button 
                         type="button"
@@ -500,7 +635,7 @@ export default function QuotePage() {
                         type="button"
                         onClick={nextStep}
                         size="lg"
-                        className="px-12 py-4 text-lg bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                        className="px-12 py-4 text-lg bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700"
                       >
                         다음 단계
                         <ChevronRight className="w-5 h-5 ml-2" />
@@ -563,6 +698,22 @@ export default function QuotePage() {
                       />
                     </div>
 
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        레퍼럴 코드 (선택사항)
+                      </label>
+                      <Input
+                        value={formData.referralCode}
+                        onChange={(e) => handleInputChange('referralCode', e.target.value.toUpperCase())}
+                        placeholder="KBZ2024"
+                        className="h-14 text-lg border-gray-200 font-mono"
+                        maxLength={8}
+                      />
+                      <p className="text-sm text-gray-500 mt-2">
+                        친구의 레퍼럴 코드가 있다면 입력해주세요. 특별 혜택을 받을 수 있습니다.
+                      </p>
+                    </div>
+
                     {/* 견적 요청 요약 */}
                     <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8 mt-8">
                       <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
@@ -617,7 +768,7 @@ export default function QuotePage() {
                         type="submit" 
                         size="lg" 
                         disabled={loading || !formData.name || !formData.phone}
-                        className="px-12 py-4 text-lg bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 disabled:opacity-50"
+                        className="px-12 py-4 text-lg bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700 disabled:opacity-50"
                       >
                         {loading ? (
                           <>
