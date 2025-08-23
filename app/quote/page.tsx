@@ -84,63 +84,95 @@ export default function QuotePage() {
       const { attachedFiles, ...formDataWithoutFiles } = formData;
       let uploadedFiles: FileUploadResult[] = [];
       
-      // 파일이 있으면 업로드
-      if (attachedFiles.length > 0) {
-        setUploadingFiles(true);
-        toast.info(`${attachedFiles.length}개 파일을 업로드하는 중...`);
-        
-        try {
-          uploadedFiles = await uploadMultipleFiles(
-            attachedFiles, 
-            `quotes/${user?.id || 'anonymous'}`,
-            (progress, fileName) => {
-              setUploadProgress(progress);
-              if (progress === 100) {
-                console.log(`✅ ${fileName} 업로드 완료`);
-              }
-            }
-          );
+      // Firebase가 설정되어 있으면 정상 처리
+      if (db && storage) {
+        // 파일이 있으면 업로드
+        if (attachedFiles.length > 0) {
+          setUploadingFiles(true);
+          toast.info(`${attachedFiles.length}개 파일을 업로드하는 중...`);
           
-          toast.success(`${uploadedFiles.length}개 파일 업로드 완료!`);
-        } catch (uploadError) {
-          console.error('파일 업로드 실패:', uploadError);
-          toast.error('파일 업로드 중 오류가 발생했습니다.');
-          setLoading(false);
-          setUploadingFiles(false);
-          return;
-        } finally {
-          setUploadingFiles(false);
-          setUploadProgress(0);
+          try {
+            uploadedFiles = await uploadMultipleFiles(
+              attachedFiles, 
+              `quotes/${user?.id || 'anonymous'}`,
+              (progress, fileName) => {
+                setUploadProgress(progress);
+                if (progress === 100) {
+                  console.log(`✅ ${fileName} 업로드 완료`);
+                }
+              }
+            );
+            
+            toast.success(`${uploadedFiles.length}개 파일 업로드 완료!`);
+          } catch (uploadError) {
+            console.error('파일 업로드 실패:', uploadError);
+            toast.error('파일 업로드 중 오류가 발생했습니다.');
+            setLoading(false);
+            setUploadingFiles(false);
+            return;
+          } finally {
+            setUploadingFiles(false);
+            setUploadProgress(0);
+          }
         }
-      }
 
-      // Firestore에 저장할 데이터 준비
-      const quoteData = {
-        ...formDataWithoutFiles,
-        attachedFiles: uploadedFiles, // 업로드된 파일 정보 저장
-        userId: user?.id || 'anonymous',
-        userName: formData.name || user?.name || user?.nickname || '익명',
-        userEmail: formData.email || user?.email || '',
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+        // Firestore에 저장할 데이터 준비
+        const quoteData = {
+          ...formDataWithoutFiles,
+          attachedFiles: uploadedFiles,
+          userId: user?.id || 'anonymous',
+          userName: formData.name || user?.name || user?.nickname || '익명',
+          userEmail: formData.email || user?.email || '',
+          status: 'pending',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
 
-      const quotesCollection = collection(db, 'quotes');
-      const quoteRef = await addDoc(quotesCollection, quoteData);
-      
-      // 견적 제출 알림 (푸시 + 이메일)
-      if (formData.email) {
-        try {
-          await quoteSubmitted(
-            formData.email,
-            formData.name || user?.name || user?.nickname || '고객님',
-            user?.id || quoteRef.id
-          );
-        } catch (error) {
-          console.error('알림 전송 실패:', error);
-          // 알림 실패는 사용자에게 표시하지 않음
+        const quotesCollection = collection(db, 'quotes');
+        const quoteRef = await addDoc(quotesCollection, quoteData);
+        
+        // 견적 제출 알림 (푸시 + 이메일)
+        if (formData.email) {
+          try {
+            await quoteSubmitted(
+              formData.email,
+              formData.name || user?.name || user?.nickname || '고객님',
+              user?.id || quoteRef.id
+            );
+          } catch (error) {
+            console.error('알림 전송 실패:', error);
+          }
         }
+      } else {
+        // Firebase가 없을 때는 로컬 저장소 또는 콘솔에 임시 저장
+        console.log('🔥 Firebase가 설정되지 않음 - 임시 견적 데이터:', {
+          ...formDataWithoutFiles,
+          attachedFiles: attachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
+          userId: user?.id || 'anonymous',
+          userName: formData.name || user?.name || user?.nickname || '익명',
+          userEmail: formData.email || user?.email || '',
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        });
+        
+        // 로컬 저장소에 임시 저장
+        const tempQuoteData = {
+          id: `temp_${Date.now()}`,
+          ...formDataWithoutFiles,
+          attachedFiles: attachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
+          userId: user?.id || 'anonymous',
+          userName: formData.name || user?.name || user?.nickname || '익명',
+          userEmail: formData.email || user?.email || '',
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        };
+        
+        // 로컬 저장소에 저장 (관리자가 확인할 수 있도록)
+        const existingQuotes = JSON.parse(localStorage.getItem('tempQuotes') || '[]');
+        existingQuotes.push(tempQuoteData);
+        localStorage.setItem('tempQuotes', JSON.stringify(existingQuotes));
+        
+        toast.success('견적 요청이 임시 저장되었습니다. (Firebase 설정 후 정상 처리됩니다)');
       }
       
       toast.success('견적 요청이 성공적으로 제출되었습니다!');

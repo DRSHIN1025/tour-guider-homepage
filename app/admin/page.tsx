@@ -112,14 +112,31 @@ export default function ModernAdminPage() {
 
   const fetchQuotes = async () => {
     try {
-      const quotesRef = collection(db, 'quotes');
-      const q = query(quotesRef, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
+      let quotesData: Quote[] = [];
       
-      const quotesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Quote[];
+      if (db) {
+        // Firebase가 설정되어 있을 때
+        const quotesRef = collection(db, 'quotes');
+        const q = query(quotesRef, orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        
+        quotesData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Quote[];
+      } else {
+        // Firebase가 없을 때 로컬 저장소에서 임시 데이터 로드
+        const tempQuotes = JSON.parse(localStorage.getItem('tempQuotes') || '[]');
+        quotesData = tempQuotes.map((quote: any) => ({
+          ...quote,
+          isTemp: true // 임시 데이터임을 표시
+        }));
+        
+        // 임시 데이터가 있으면 알림
+        if (tempQuotes.length > 0) {
+          console.log(`📋 ${tempQuotes.length}개의 임시 견적 요청을 불러왔습니다.`);
+        }
+      }
       
       setQuotes(quotesData);
     } catch (error) {

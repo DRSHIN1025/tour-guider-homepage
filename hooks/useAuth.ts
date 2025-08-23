@@ -15,15 +15,28 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // Firebase Auth가 설정되어 있을 때만 실행
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+      return unsubscribe;
+    } else {
+      // Firebase가 없을 때는 로컬 Auth 사용
+      const localUser = localStorage.getItem('tempUser');
+      if (localUser) {
+        setUser(JSON.parse(localUser));
+      }
       setLoading(false);
-    });
-
-    return unsubscribe;
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!auth) {
+      return { success: false, error: 'Firebase가 설정되지 않았습니다. 데모 로그인을 사용해주세요.' };
+    }
+    
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       return { success: true, user: result.user };
@@ -33,6 +46,10 @@ export function useAuth() {
   };
 
   const signUp = async (email: string, password: string) => {
+    if (!auth) {
+      return { success: false, error: 'Firebase가 설정되지 않았습니다. 데모 회원가입을 사용해주세요.' };
+    }
+    
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       return { success: true, user: result.user };
@@ -42,6 +59,22 @@ export function useAuth() {
   };
 
   const signInWithGoogle = async () => {
+    if (!auth) {
+      // Firebase가 없을 때 임시 구글 로그인
+      const tempUser = {
+        uid: `temp_google_${Date.now()}`,
+        email: 'demo-google@tourguider.com',
+        displayName: 'Google 데모 사용자',
+        photoURL: '',
+        emailVerified: true
+      };
+      
+      localStorage.setItem('tempUser', JSON.stringify(tempUser));
+      setUser(tempUser as any);
+      
+      return { success: true, user: tempUser };
+    }
+    
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -53,7 +86,13 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      } else {
+        // 로컬 로그아웃
+        localStorage.removeItem('tempUser');
+        setUser(null);
+      }
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
