@@ -4,32 +4,49 @@ import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
+// Firebase 환경변수 확인
+const hasFirebaseConfig = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
+                         process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
+                         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'demo-key',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'demo-project.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'demo-project',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo-project.appspot.com',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '123456789',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:123456789:web:demo',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || 'G-DEMO',
 };
 
 // Firebase 앱 초기화
 let app;
 if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+  if (hasFirebaseConfig) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    // 환경변수가 없을 때 더미 앱 생성
+    app = initializeApp({
+      apiKey: 'demo-key',
+      authDomain: 'demo-project.firebaseapp.com',
+      projectId: 'demo-project',
+      storageBucket: 'demo-project.appspot.com',
+      messagingSenderId: '123456789',
+      appId: '1:123456789:web:demo',
+    });
+  }
 } else {
   app = getApps()[0];
 }
 
-// Firestore 초기화
-export const db = getFirestore(app);
+// Firestore 초기화 (안전하게)
+export const db = hasFirebaseConfig ? getFirestore(app) : null;
 
-// Storage 초기화
-export const storage = getStorage(app);
+// Storage 초기화 (안전하게)
+export const storage = hasFirebaseConfig ? getStorage(app) : null;
 
-// Auth 초기화
-export const auth = getAuth(app);
+// Auth 초기화 (안전하게)
+export const auth = hasFirebaseConfig ? getAuth(app) : null;
 
 // Analytics 초기화 (브라우저에서만)
 if (typeof window !== 'undefined') {
