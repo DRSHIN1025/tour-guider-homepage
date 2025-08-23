@@ -7,35 +7,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
+import { useLocalAuth } from "@/hooks/useLocalAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useRouter } from "next/navigation";
 import { 
   MapPin, 
-  Clock, 
   Users, 
   Calendar, 
-  MessageCircle, 
-  Phone, 
-  Mail, 
   Loader2, 
   CheckCircle,
   ArrowRight,
-  DollarSign,
-  Globe,
   Star,
   ArrowLeft,
   ChevronRight,
   Upload,
   X,
-  FileText
+  FileText,
+  Baby,
+  User
 } from "lucide-react";
 import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { uploadMultipleFiles, validateFileSize, validateFileType, FileUploadResult } from "@/lib/storage";
 import Link from "next/link";
-import { designSystem, commonClasses } from "@/lib/design-system";
+import { commonClasses } from "@/lib/design-system";
 
 export default function QuotePage() {
-  const { user } = useAuth();
+  const { isAuthenticated, user, logout } = useLocalAuth();
+  const { quoteSubmitted } = useNotifications();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -43,32 +44,30 @@ export default function QuotePage() {
   const [formData, setFormData] = useState({
     destination: '',
     duration: '',
-    people: '',
+    adults: '',
+    children: '',
+    infants: '',
     budget: '',
     travelDate: '',
     specialRequests: '',
-    contactMethod: 'email',
     phone: '',
     email: user?.email || '',
-    name: user?.displayName || '',
-    travelStyle: '',
-    accommodation: '',
+    name: user?.name || user?.nickname || '',
     preferredAirline: '',
     hotelGrade: '',
-    attachedFiles: [] as File[],
-    referralCode: ''
+    attachedFiles: [] as File[]
   });
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 필수 항목 검증
-    if (!formData.destination || !formData.duration || !formData.people) {
+    if (!formData.destination || !formData.duration || (!formData.adults && !formData.children && !formData.infants)) {
       toast.error('필수 항목을 모두 입력해주세요.');
       return;
     }
 
-    // 연락처 정보 검증
     if (!formData.email && !formData.phone) {
       toast.error('이메일 또는 전화번호를 입력해주세요.');
       return;
@@ -80,12 +79,47 @@ export default function QuotePage() {
     }
 
     setLoading(true);
-
+    
     try {
+      const { attachedFiles, ...formDataWithoutFiles } = formData;
+      let uploadedFiles: FileUploadResult[] = [];
+      
+      // 파일이 있으면 업로드
+      if (attachedFiles.length > 0) {
+        setUploadingFiles(true);
+        toast.info(`${attachedFiles.length}개 파일을 업로드하는 중...`);
+        
+        try {
+          uploadedFiles = await uploadMultipleFiles(
+            attachedFiles, 
+            `quotes/${user?.id || 'anonymous'}`,
+            (progress, fileName) => {
+              setUploadProgress(progress);
+              if (progress === 100) {
+                console.log(`✅ ${fileName} 업로드 완료`);
+              }
+            }
+          );
+          
+          toast.success(`${uploadedFiles.length}개 파일 업로드 완료!`);
+        } catch (uploadError) {
+          console.error('파일 업로드 실패:', uploadError);
+          toast.error('파일 업로드 중 오류가 발생했습니다.');
+          setLoading(false);
+          setUploadingFiles(false);
+          return;
+        } finally {
+          setUploadingFiles(false);
+          setUploadProgress(0);
+        }
+      }
+
+      // Firestore에 저장할 데이터 준비
       const quoteData = {
-        ...formData,
-        userId: user?.uid || 'anonymous',
-        userName: formData.name || user?.displayName || '익명',
+        ...formDataWithoutFiles,
+        attachedFiles: uploadedFiles, // 업로드된 파일 정보 저장
+        userId: user?.id || 'anonymous',
+        userName: formData.name || user?.name || user?.nickname || '익명',
         userEmail: formData.email || user?.email || '',
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -93,17 +127,27 @@ export default function QuotePage() {
       };
 
       const quotesCollection = collection(db, 'quotes');
-      const docRef = await addDoc(quotesCollection, quoteData);
+      const quoteRef = await addDoc(quotesCollection, quoteData);
+      
+      // 견적 제출 알림 (푸시 + 이메일)
+      if (formData.email) {
+        try {
+          await quoteSubmitted(
+            formData.email,
+            formData.name || user?.name || user?.nickname || '고객님',
+            user?.id || quoteRef.id
+          );
+        } catch (error) {
+          console.error('알림 전송 실패:', error);
+          // 알림 실패는 사용자에게 표시하지 않음
+        }
+      }
       
       toast.success('견적 요청이 성공적으로 제출되었습니다!');
       setSubmitted(true);
     } catch (error) {
       console.error('견적 요청 실패:', error);
-      if (error instanceof Error) {
-        toast.error(`견적 요청 실패: ${error.message}`);
-      } else {
-        toast.error('견적 요청 중 알 수 없는 오류가 발생했습니다.');
-      }
+      toast.error('견적 요청 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -119,37 +163,47 @@ export default function QuotePage() {
   const handleFileUpload = (files: FileList | null) => {
     if (!files) return;
     
-    const validTypes = [
-      'application/vnd.hancom.hwp',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'application/pdf'
-    ];
-
     const newFiles = Array.from(files).filter(file => {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (!validateFileSize(file, 10)) {
         toast.error(`${file.name}은(는) 파일 크기가 너무 큽니다. (최대 10MB)`);
         return false;
       }
       
-      if (!validTypes.includes(file.type) && !file.name.match(/\.(hwp|doc|docx|ppt|pptx|jpg|jpeg|png|gif|webp|pdf)$/i)) {
-        toast.error(`${file.name}은(는) 지원하지 않는 파일 형식입니다.`);
+      const allowedTypes = [
+        // 이미지 파일
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        // 문서 파일
+        'application/pdf',
+        // MS Word
+        'application/msword', // .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        // MS PowerPoint
+        'application/vnd.ms-powerpoint', // .ppt
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+        // HWP 파일 (한글 파일)
+        'application/x-hwp', 'application/haansofthwp', 'application/vnd.hancom.hwp',
+        // 기타
+        'text/plain'
+      ];
+      
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      const isValidByExtension = ['hwp', 'doc', 'docx', 'ppt', 'pptx', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt'].includes(fileExtension || '');
+      
+      if (!validateFileType(file, allowedTypes) && !isValidByExtension) {
+        toast.error(`${file.name}은(는) 지원하지 않는 파일 형식입니다.\n\n지원 형식: HWP, DOC, DOCX, PPT, PPTX, PDF, JPG, PNG, GIF, WEBP, TXT`);
         return false;
       }
       
       return true;
     });
 
-    setFormData(prev => ({
-      ...prev,
-      attachedFiles: [...prev.attachedFiles, ...newFiles]
-    }));
+    if (newFiles.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        attachedFiles: [...prev.attachedFiles, ...newFiles]
+      }));
+      toast.success(`${newFiles.length}개 파일이 추가되었습니다.`);
+    }
   };
 
   const removeFile = (index: number) => {
@@ -157,6 +211,14 @@ export default function QuotePage() {
       ...prev,
       attachedFiles: prev.attachedFiles.filter((_, i) => i !== index)
     }));
+  };
+
+  const handleComplete = () => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    } else {
+      router.push('/');
+    }
   };
 
   const nextStep = () => {
@@ -174,7 +236,6 @@ export default function QuotePage() {
   if (submitted) {
     return (
       <div className="min-h-screen">
-        {/* Header */}
         <header className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
           <div className={commonClasses.container}>
             <div className="flex items-center justify-between h-20">
@@ -198,14 +259,38 @@ export default function QuotePage() {
               </nav>
 
               <div className="flex items-center space-x-4">
-                <Link href="/login">
-                  <Button 
-                    variant="outline" 
-                    className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium"
-                  >
-                    로그인
-                  </Button>
-                </Link>
+                {isAuthenticated && user ? (
+                  <>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-sm">
+                          {user.nickname?.charAt(0) || user.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                        </span>
+                      </div>
+                      <span className="text-gray-700 font-medium">
+                        {user.nickname || user.name || user.email?.split('@')[0]}님
+                      </span>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        if (confirm('로그아웃 하시겠습니까?')) {
+                          logout();
+                          alert('로그아웃되었습니다.');
+                        }
+                      }}
+                      variant="outline" 
+                      className="border-red-200 text-red-600 hover:bg-red-50 font-medium"
+                    >
+                      로그아웃
+                    </Button>
+                  </>
+                ) : (
+                  <Link href="/login">
+                    <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium">
+                      로그인
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -227,16 +312,21 @@ export default function QuotePage() {
                     맞춤 견적을 보내드립니다.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link href="/">
-                      <Button size="lg" variant="outline" className="px-8 py-3 border-blue-200 text-blue-600 hover:bg-blue-50">
-                        홈으로 돌아가기
-                      </Button>
-                    </Link>
-                    <Link href="/dashboard">
-                      <Button size="lg" className="px-8 py-3 bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700">
-                        내 견적 확인하기
-                      </Button>
-                    </Link>
+                    <Button 
+                      onClick={handleComplete}
+                      size="lg" 
+                      variant="outline" 
+                      className="px-8 py-3 border-blue-200 text-blue-600 hover:bg-blue-50"
+                    >
+                      {isAuthenticated ? '대시보드로 이동' : '홈으로 돌아가기'}
+                    </Button>
+                                          {isAuthenticated && (
+                      <Link href="/dashboard">
+                        <Button size="lg" className="px-8 py-3 bg-gradient-to-r from-emerald-500 via-teal-600 to-purple-700 hover:from-emerald-600 hover:via-teal-700 hover:to-purple-800">
+                          내 견적 확인하기
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -249,7 +339,6 @@ export default function QuotePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <header className="bg-white/95 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
         <div className={commonClasses.container}>
           <div className="flex items-center justify-between h-20">
@@ -273,14 +362,38 @@ export default function QuotePage() {
             </nav>
 
             <div className="flex items-center space-x-4">
-              <Link href="/login">
-                <Button 
-                  variant="outline" 
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium"
-                >
-                  로그인
-                </Button>
-              </Link>
+                              {isAuthenticated && user ? (
+                <>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-bold text-sm">
+                        {user.nickname?.charAt(0) || user.name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <span className="text-gray-700 font-medium">
+                      {user.nickname || user.name || user.email?.split('@')[0]}님
+                    </span>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      if (confirm('로그아웃 하시겠습니까?')) {
+                        logout();
+                        alert('로그아웃되었습니다.');
+                      }
+                    }}
+                    variant="outline" 
+                    className="border-red-200 text-red-600 hover:bg-red-50 font-medium"
+                  >
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <Link href="/login">
+                  <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium">
+                    로그인
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -289,7 +402,6 @@ export default function QuotePage() {
       <div className="py-16 bg-gradient-to-br from-emerald-50/30 via-teal-50/20 to-purple-50/30">
         <div className={commonClasses.container}>
           <div className="max-w-4xl mx-auto">
-            {/* Header */}
             <div className="text-center mb-12">
               <Badge className="mb-6 bg-emerald-100 text-emerald-700 px-4 py-2 text-sm font-medium">
                 ✈️ 맞춤 견적 요청
@@ -308,7 +420,6 @@ export default function QuotePage() {
             </div>
 
             <form onSubmit={handleSubmit}>
-              {/* Progress Steps */}
               <div className="flex items-center justify-center mb-12">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center">
@@ -331,7 +442,7 @@ export default function QuotePage() {
                       <Star className={`w-6 h-6 ${currentStep >= 2 ? 'text-white' : 'text-gray-400'}`} />
                     </div>
                     <span className={`ml-3 font-medium ${currentStep >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-                      세부 요청
+                      선호사항
                     </span>
                   </div>
                   
@@ -350,7 +461,6 @@ export default function QuotePage() {
                 </div>
               </div>
 
-              {/* Step 1: 여행 기본 정보 */}
               {currentStep === 1 && (
                 <Card className="bg-white shadow-2xl border-0">
                   <CardHeader className="text-center pb-8">
@@ -387,22 +497,64 @@ export default function QuotePage() {
                           required
                         />
                       </div>
+                    </div>
 
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
-                          여행 인원 <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          type="number"
-                          value={formData.people}
-                          onChange={(e) => handleInputChange('people', e.target.value)}
-                          placeholder="숫자로 입력 (예: 2, 4, 10)"
-                          className="h-14 text-lg border-gray-200"
-                          min="1"
-                          required
-                        />
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        여행 인원 <span className="text-red-500">*</span>
+                      </label>
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <User className="w-8 h-8 text-blue-600" />
+                          </div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">성인</label>
+                          <Input
+                            type="number"
+                            value={formData.adults}
+                            onChange={(e) => handleInputChange('adults', e.target.value)}
+                            placeholder="0"
+                            className="h-12 text-center border-gray-200"
+                            min="0"
+                          />
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <Users className="w-8 h-8 text-green-600" />
+                          </div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">아동 (만 12세 이하)</label>
+                          <Input
+                            type="number"
+                            value={formData.children}
+                            onChange={(e) => handleInputChange('children', e.target.value)}
+                            placeholder="0"
+                            className="h-12 text-center border-gray-200"
+                            min="0"
+                          />
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <Baby className="w-8 h-8 text-purple-600" />
+                          </div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">유아 (만 2세 이하)</label>
+                          <Input
+                            type="number"
+                            value={formData.infants}
+                            onChange={(e) => handleInputChange('infants', e.target.value)}
+                            placeholder="0"
+                            className="h-12 text-center border-gray-200"
+                            min="0"
+                          />
+                        </div>
                       </div>
+                      <p className="text-sm text-gray-500 mt-3 text-center">
+                        💡 최소 1명 이상 입력해주세요 (성인, 아동, 유아 중)
+                      </p>
+                    </div>
 
+                    <div className="grid md:grid-cols-2 gap-8">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           1인당 예산
@@ -411,28 +563,28 @@ export default function QuotePage() {
                           <SelectTrigger className="h-14 text-lg border-gray-200">
                             <SelectValue placeholder="예산대를 선택해주세요" />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="50만원미만">50만원 미만</SelectItem>
-                            <SelectItem value="50-100만원">50만원 - 100만원</SelectItem>
-                            <SelectItem value="100-200만원">100만원 - 200만원</SelectItem>
-                            <SelectItem value="200-300만원">200만원 - 300만원</SelectItem>
-                            <SelectItem value="300만원이상">300만원 이상</SelectItem>
-                            <SelectItem value="상담후결정">상담 후 결정</SelectItem>
+                          <SelectContent className="bg-white/95 backdrop-blur-md border border-gray-200 shadow-xl rounded-lg z-[60] min-w-[200px]">
+                            <SelectItem value="50만원미만" className="hover:bg-gray-100/80 focus:bg-gray-100/80">50만원 미만</SelectItem>
+                            <SelectItem value="50-100만원" className="hover:bg-gray-100/80 focus:bg-gray-100/80">50만원 - 100만원</SelectItem>
+                            <SelectItem value="100-200만원" className="hover:bg-gray-100/80 focus:bg-gray-100/80">100만원 - 200만원</SelectItem>
+                            <SelectItem value="200-300만원" className="hover:bg-gray-100/80 focus:bg-gray-100/80">200만원 - 300만원</SelectItem>
+                            <SelectItem value="300만원이상" className="hover:bg-gray-100/80 focus:bg-gray-100/80">300만원 이상</SelectItem>
+                            <SelectItem value="상담후결정" className="hover:bg-gray-100/80 focus:bg-gray-100/80">상담 후 결정</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">
-                        희망 여행 날짜
-                      </label>
-                      <Input
-                        type="date"
-                        value={formData.travelDate}
-                        onChange={(e) => handleInputChange('travelDate', e.target.value)}
-                        className="h-14 text-lg border-gray-200"
-                      />
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                          희망 여행 날짜
+                        </label>
+                        <Input
+                          type="date"
+                          value={formData.travelDate}
+                          onChange={(e) => handleInputChange('travelDate', e.target.value)}
+                          className="h-14 text-lg border-gray-200"
+                        />
+                      </div>
                     </div>
 
                     <div className="flex justify-end pt-8">
@@ -441,7 +593,7 @@ export default function QuotePage() {
                         onClick={nextStep}
                         size="lg"
                         className="px-12 py-4 text-lg bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700"
-                        disabled={!formData.destination || !formData.duration || !formData.people}
+                        disabled={!formData.destination || !formData.duration || (!formData.adults && !formData.children && !formData.infants)}
                       >
                         다음 단계
                         <ChevronRight className="w-5 h-5 ml-2" />
@@ -451,56 +603,17 @@ export default function QuotePage() {
                 </Card>
               )}
 
-              {/* Step 2: 세부 요청사항 */}
               {currentStep === 2 && (
                 <Card className="bg-white shadow-2xl border-0">
                   <CardHeader className="text-center pb-8">
                     <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
                       <Star className="w-10 h-10 text-green-600" />
                     </div>
-                    <CardTitle className="text-3xl text-gray-900 mb-4">세부 요청사항</CardTitle>
-                    <p className="text-gray-600 text-lg">어떤 스타일의 여행을 원하시나요?</p>
+                    <CardTitle className="text-3xl text-gray-900 mb-4">선호사항</CardTitle>
+                    <p className="text-gray-600 text-lg">항공사와 호텔 등급 선호도를 알려주세요</p>
                   </CardHeader>
                   <CardContent className="space-y-8 pb-12">
                     <div className="grid md:grid-cols-2 gap-8">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
-                          여행 스타일
-                        </label>
-                        <Select onValueChange={(value) => handleInputChange('travelStyle', value)}>
-                          <SelectTrigger className="h-14 text-lg border-gray-200">
-                            <SelectValue placeholder="선호하는 여행 스타일" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="휴양">🏖️ 휴양 중심 (리조트, 해변)</SelectItem>
-                            <SelectItem value="관광">🏛️ 관광 중심 (문화, 역사)</SelectItem>
-                            <SelectItem value="액티비티">🎯 액티비티 중심 (체험, 모험)</SelectItem>
-                            <SelectItem value="음식">🍜 미식 중심 (로컬 푸드 투어)</SelectItem>
-                            <SelectItem value="쇼핑">🛍️ 쇼핑 중심</SelectItem>
-                            <SelectItem value="복합">🎭 복합적 (여러 스타일 혼합)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
-                          숙박 선호도
-                        </label>
-                        <Select onValueChange={(value) => handleInputChange('accommodation', value)}>
-                          <SelectTrigger className="h-14 text-lg border-gray-200">
-                            <SelectValue placeholder="숙박 시설 선호도" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="럭셔리">🏨 럭셔리 호텔/리조트</SelectItem>
-                            <SelectItem value="부티크">🏛️ 부티크 호텔</SelectItem>
-                            <SelectItem value="스탠다드">🏨 스탠다드 호텔</SelectItem>
-                            <SelectItem value="게스트하우스">🏠 게스트하우스/B&B</SelectItem>
-                            <SelectItem value="현지체험">🏘️ 현지 민박 체험</SelectItem>
-                            <SelectItem value="상관없음">🤷‍♂️ 상관없음</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           선호 항공사
@@ -511,25 +624,24 @@ export default function QuotePage() {
                           placeholder="예: 대한항공, 아시아나, 에어부산"
                           className="h-14 text-lg border-gray-200"
                         />
+                        <p className="text-sm text-gray-500 mt-2">
+                          💡 예시: 대한항공, 아시아나, 저가항공 등
+                        </p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-3">
                           호텔 등급 선호도
                         </label>
-                        <Select onValueChange={(value) => handleInputChange('hotelGrade', value)}>
-                          <SelectTrigger className="h-14 text-lg border-gray-200">
-                            <SelectValue placeholder="호텔 등급을 선택해주세요" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5성급">⭐⭐⭐⭐⭐ 5성급 럭셔리</SelectItem>
-                            <SelectItem value="4성급">⭐⭐⭐⭐ 4성급 프리미엄</SelectItem>
-                            <SelectItem value="3성급">⭐⭐⭐ 3성급 스탠다드</SelectItem>
-                            <SelectItem value="부티크">🏛️ 부티크 호텔</SelectItem>
-                            <SelectItem value="리조트">🏖️ 리조트 중심</SelectItem>
-                            <SelectItem value="상관없음">🤷‍♂️ 상관없음</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          value={formData.hotelGrade}
+                          onChange={(e) => handleInputChange('hotelGrade', e.target.value)}
+                          placeholder="예: 5성급, 준5성급, 4성급, 일반호텔"
+                          className="h-14 text-lg border-gray-200"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">
+                          💡 예시: 5성급, 준5성급, 4성급, 일반호텔 등
+                        </p>
                       </div>
                     </div>
 
@@ -549,13 +661,11 @@ export default function QuotePage() {
                       </p>
                     </div>
 
-                    {/* 파일 첨부 */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-3">
                         참고 자료 첨부 (선택사항)
                       </label>
                       
-                      {/* 드래그 앤 드롭 영역 */}
                       <div 
                         className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-emerald-400 transition-colors"
                         onDrop={(e) => {
@@ -575,7 +685,7 @@ export default function QuotePage() {
                         <input
                           type="file"
                           multiple
-                          accept=".hwp,.doc,.docx,.ppt,.pptx,.pdf,.jpg,.jpeg,.png,.gif,.webp"
+                          accept=".hwp,.doc,.docx,.ppt,.pptx,.pdf,.jpg,.jpeg,.png,.gif,.webp,.txt,application/x-hwp,application/haansofthwp,application/vnd.hancom.hwp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf,image/*,text/plain"
                           onChange={(e) => handleFileUpload(e.target.files)}
                           className="hidden"
                           id="file-upload"
@@ -591,7 +701,6 @@ export default function QuotePage() {
                         </Button>
                       </div>
 
-                      {/* 첨부된 파일 목록 */}
                       {formData.attachedFiles.length > 0 && (
                         <div className="mt-4 space-y-2">
                           <p className="text-sm font-semibold text-gray-700">첨부된 파일:</p>
@@ -645,7 +754,6 @@ export default function QuotePage() {
                 </Card>
               )}
 
-              {/* Step 3: 연락처 정보 */}
               {currentStep === 3 && (
                 <Card className="bg-white shadow-2xl border-0">
                   <CardHeader className="text-center pb-8">
@@ -698,23 +806,7 @@ export default function QuotePage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-3">
-                        레퍼럴 코드 (선택사항)
-                      </label>
-                      <Input
-                        value={formData.referralCode}
-                        onChange={(e) => handleInputChange('referralCode', e.target.value.toUpperCase())}
-                        placeholder="KBZ2024"
-                        className="h-14 text-lg border-gray-200 font-mono"
-                        maxLength={8}
-                      />
-                      <p className="text-sm text-gray-500 mt-2">
-                        친구의 레퍼럴 코드가 있다면 입력해주세요. 특별 혜택을 받을 수 있습니다.
-                      </p>
-                    </div>
 
-                    {/* 견적 요청 요약 */}
                     <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8 mt-8">
                       <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                         <Calendar className="w-6 h-6 mr-3 text-blue-600" />
@@ -732,7 +824,15 @@ export default function QuotePage() {
                           </div>
                           <div className="flex items-center">
                             <span className="font-semibold text-gray-700 w-20">인원:</span>
-                            <span className="text-gray-900">{formData.people || '미정'}</span>
+                            <span className="text-gray-900">
+                              {(() => {
+                                const parts = [];
+                                if (formData.adults && parseInt(formData.adults) > 0) parts.push(`성인 ${formData.adults}명`);
+                                if (formData.children && parseInt(formData.children) > 0) parts.push(`아동 ${formData.children}명`);
+                                if (formData.infants && parseInt(formData.infants) > 0) parts.push(`유아 ${formData.infants}명`);
+                                return parts.length > 0 ? parts.join(', ') : '미정';
+                              })()}
+                            </span>
                           </div>
                         </div>
                         <div className="space-y-3">
@@ -745,8 +845,8 @@ export default function QuotePage() {
                             <span className="text-gray-900">{formData.travelDate || '미정'}</span>
                           </div>
                           <div className="flex items-center">
-                            <span className="font-semibold text-gray-700 w-20">스타일:</span>
-                            <span className="text-gray-900">{formData.travelStyle || '미정'}</span>
+                            <span className="font-semibold text-gray-700 w-20">항공사:</span>
+                            <span className="text-gray-900">{formData.preferredAirline || '미정'}</span>
                           </div>
                         </div>
                       </div>
@@ -764,24 +864,46 @@ export default function QuotePage() {
                         이전
                       </Button>
                       
-                      <Button 
-                        type="submit" 
-                        size="lg" 
-                        disabled={loading || !formData.name || !formData.phone}
-                        className="px-12 py-4 text-lg bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700 disabled:opacity-50"
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            처리 중...
-                          </>
-                        ) : (
-                          <>
-                            견적 요청 완료하기
-                            <ArrowRight className="w-5 h-5 ml-2" />
-                          </>
+                      <div className="flex flex-col items-end space-y-3">
+                        {uploadingFiles && uploadProgress > 0 && (
+                          <div className="w-full max-w-xs">
+                            <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                              <span>파일 업로드</span>
+                              <span>{Math.round(uploadProgress)}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-emerald-400 to-teal-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${uploadProgress}%` }}
+                              />
+                            </div>
+                          </div>
                         )}
-                      </Button>
+                        
+                        <Button 
+                          type="submit" 
+                          size="lg" 
+                          disabled={loading || !formData.name || !formData.phone || uploadingFiles}
+                          className="px-12 py-4 text-lg bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-600 hover:from-emerald-500 hover:via-teal-600 hover:to-purple-700 disabled:opacity-50"
+                        >
+                          {uploadingFiles ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              파일 업로드 중...
+                            </>
+                          ) : loading ? (
+                            <>
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                              처리 중...
+                            </>
+                          ) : (
+                            <>
+                              견적 요청 완료하기
+                              <ArrowRight className="w-5 h-5 ml-2" />
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

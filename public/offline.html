@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오프라인 - 투어가이더</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
+        }
+
+        .offline-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .retry-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 0.5rem;
+        }
+
+        .retry-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .home-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .home-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .status-indicator {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .connection-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-status.online {
+            background: #2ed573;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .tips {
+            margin-top: 2rem;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        .tips h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .tips ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tips li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .tips li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #ffa502;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">
+            📡
+        </div>
+
+        <h1>인터넷 연결 없음</h1>
+        <p class="subtitle">
+            현재 인터넷 연결이 없습니다.<br>
+            연결을 확인하고 다시 시도해주세요.
+        </p>
+
+        <div>
+            <button class="retry-button" onclick="retryConnection()">
+                🔄 다시 시도
+            </button>
+            <a href="/" class="home-button">
+                🏠 홈으로
+            </a>
+        </div>
+
+        <div class="status-indicator">
+            <span class="connection-status" id="connectionStatus"></span>
+            <span id="statusText">연결 상태 확인 중...</span>
+        </div>
+
+        <div class="tips">
+            <h3>💡 오프라인 상태에서 할 수 있는 것들</h3>
+            <ul>
+                <li>이전에 방문한 페이지 캐시된 내용 확인</li>
+                <li>저장된 여행 계획 및 견적 내역 보기</li>
+                <li>오프라인 모드에서 기본 정보 확인</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+
+            if (navigator.onLine) {
+                statusElement.className = 'connection-status online';
+                statusText.textContent = '온라인 - 연결이 복구되었습니다!';
+
+                // 잠시 후 홈페이지로 리다이렉트
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                statusElement.className = 'connection-status';
+                statusText.textContent = '오프라인 - 인터넷 연결을 확인해주세요';
+            }
+        }
+
+        function retryConnection() {
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = '연결 확인 중...';
+
+            // 간단한 연결 테스트
+            fetch('/favicon.ico', {
+                method: 'HEAD',
+                cache: 'no-cache'
+            })
+            .then(() => {
+                statusText.textContent = '연결 성공! 홈페이지로 이동합니다...';
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            })
+            .catch(() => {
+                statusText.textContent = '연결 실패 - 다시 시도해주세요';
+            });
+        }
+
+        // 초기 상태 확인
+        updateConnectionStatus();
+
+        // 온라인/오프라인 이벤트 리스너
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        // 주기적으로 연결 상태 확인 (5초마다)
+        setInterval(updateConnectionStatus, 5000);
+    </script>
+</body>
+</html>

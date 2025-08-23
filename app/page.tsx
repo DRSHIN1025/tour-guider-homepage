@@ -23,6 +23,10 @@ import {
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { designSystem, commonClasses } from "@/lib/design-system";
+import { useLocalAuth } from "@/hooks/useLocalAuth";
+import { KakaoChat } from "@/components/KakaoChat";
+import { PhoneCall } from "@/components/PhoneCall";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const testimonials = [
   {
@@ -61,8 +65,14 @@ const testimonials = [
 
 export default function HomePage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+  
+  const authState = useLocalAuth();
+  const notificationState = useNotifications();
 
   useEffect(() => {
+    setIsClient(true);
+    
     const timer = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 4000);
@@ -76,6 +86,43 @@ export default function HomePage() {
   const prevTestimonial = () => {
     setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
+
+  const handleLogout = () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      authState.logout();
+      alert('로그아웃되었습니다.');
+    }
+  };
+
+  const handlePushNotificationTest = () => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification('푸시 알림 테스트', {
+          body: '브라우저 푸시 알림이 정상적으로 작동합니다!',
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'test-push',
+          requireInteraction: true
+        });
+      });
+    } else {
+      alert('이 브라우저는 푸시 알림을 지원하지 않습니다.');
+    }
+  };
+
+  // 서버 사이드 렌더링 시 기본 UI만 표시
+  if (!isClient) {
+    return (
+      <div className="min-h-screen">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">로딩 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -98,20 +145,78 @@ export default function HomePage() {
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/about" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">회사소개</Link>
               <Link href="/quote" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">견적 요청</Link>
+              <Link href="/payment" className="text-green-600 hover:text-green-700 transition-colors font-medium border border-green-200 px-3 py-1 rounded-lg hover:bg-green-50">💳 서비스 결제</Link>
               <Link href="/reviews" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">여행 후기</Link>
               <Link href="/referral" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">레퍼럴</Link>
+              {authState.isAuthenticated && (
+                <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">대시보드</Link>
+              )}
               <Link href="/admin" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">관리자</Link>
             </nav>
+            
+            <div className="hidden md:flex items-center space-x-3">
+              <KakaoChat className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-6 py-2 rounded-xl transition-colors" />
+              <PhoneCall 
+                phoneNumber="010-5940-0104"
+                variant="outline"
+                className="border-green-200 text-green-600 hover:bg-green-50 font-medium px-4 py-2"
+              >
+                010-5940-0104
+              </PhoneCall>
+            </div>
 
             <div className="flex items-center space-x-4">
-              <Link href="/login">
-                <Button 
-                  variant="outline" 
-                  className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium"
+              {/* 모바일 카카오톡 및 전화 버튼 */}
+              <div className="md:hidden flex items-center space-x-2">
+                <KakaoChat className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-3 py-2 rounded-xl transition-colors text-sm" />
+                <PhoneCall 
+                  phoneNumber="010-5940-0104"
+                  variant="outline"
+                  size="sm"
+                  className="border-green-200 text-green-600 hover:bg-green-50 font-medium px-3 py-2 text-sm"
                 >
-                  로그인
-                </Button>
-              </Link>
+                  010-5940-0104
+                </PhoneCall>
+              </div>
+              
+              {authState.isAuthenticated && authState.user ? (
+                <>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-bold text-sm">
+                        {authState.user.nickname?.charAt(0) || authState.user.name?.charAt(0) || authState.user.email?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <span className="text-gray-700 font-medium">
+                      {authState.user.nickname || authState.user.name || authState.user.email?.split('@')[0]}님
+                    </span>
+                  </div>
+                  <Link href="/dashboard">
+                    <Button 
+                      variant="outline" 
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium"
+                    >
+                      대시보드
+                    </Button>
+                  </Link>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="outline" 
+                    className="border-red-200 text-red-600 hover:bg-red-50 font-medium"
+                  >
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <Link href="/login">
+                  <Button 
+                    variant="outline" 
+                    className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium"
+                  >
+                    로그인
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -139,17 +244,81 @@ export default function HomePage() {
               현지 전문가가 직접 설계하는 맞춤형 여행 일정을 경험해보세요.
             </p>
 
-            <div className="mb-12">
-              <Link href="/quote">
-                <Button 
-                  size="lg" 
-                  className="px-12 py-4 text-xl font-bold bg-white text-purple-600 hover:bg-gray-50 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
-                >
-                  <Sparkles className="mr-3 w-6 h-6" />
-                  무료 견적 요청하기
-                  <ArrowRight className="ml-3 w-6 h-6" />
-                </Button>
-              </Link>
+            <div className="mb-12 space-y-6">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link href="/quote">
+                  <Button 
+                    size="lg" 
+                    className="px-16 py-6 text-2xl font-bold bg-white text-purple-600 hover:bg-gray-50 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    <Sparkles className="mr-4 w-8 h-8" />
+                    무료 견적 요청하기
+                    <ArrowRight className="ml-4 w-8 h-8" />
+                  </Button>
+                </Link>
+                
+                <Link href="/payment">
+                  <Button 
+                    size="lg" 
+                    className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    💳 전문 상담 서비스
+                    <ArrowRight className="ml-3 w-7 h-7" />
+                  </Button>
+                </Link>
+              </div>
+              
+              {/* 알림 테스트 버튼 (개발용) */}
+              {authState.isAuthenticated && (
+                <div className="flex justify-center space-x-4">
+                  <Button 
+                    onClick={() => notificationState.success('테스트 성공', '알림 시스템이 정상 작동합니다!')}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  >
+                    성공 알림 테스트
+                  </Button>
+                  <Button 
+                    onClick={() => notificationState.error('테스트 오류', '오류 알림 테스트입니다.')}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  >
+                    오류 알림 테스트
+                  </Button>
+                  <Button 
+                    onClick={() => notificationState.warning('테스트 경고', '경고 알림 테스트입니다.')}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  >
+                    경고 알림 테스트
+                  </Button>
+                  <Button 
+                    onClick={() => notificationState.info('테스트 정보', '정보 알림 테스트입니다.')}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                  >
+                    정보 알림 테스트
+                  </Button>
+                </div>
+              )}
+
+              {/* 푸시 알림 테스트 버튼 */}
+              {authState.isAuthenticated && (
+                <div className="flex justify-center mt-4">
+                  <Button 
+                    onClick={handlePushNotificationTest}
+                    variant="outline"
+                    size="sm"
+                    className="bg-purple-500/20 backdrop-blur-sm border-purple-300/30 text-purple-200 hover:bg-purple-500/30"
+                  >
+                    푸시 알림 테스트
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Stats */}
@@ -497,10 +666,7 @@ export default function HomePage() {
                     친근하고 편안한 카톡으로<br />24시간 언제든 문의해주세요
                   </p>
                 </div>
-                <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 rounded-2xl transition-colors">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  카카오톡으로 문의하기
-                </Button>
+                <KakaoChat className="w-full" />
               </CardContent>
             </Card>
 
@@ -515,10 +681,12 @@ export default function HomePage() {
                     전문 상담사와 직접 통화로<br />자세한 상담을 받아보세요
                   </p>
                 </div>
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl transition-colors">
-                  <Phone className="w-5 h-5 mr-2" />
-                  1588-0000 (평일 9-18시)
-                </Button>
+                <PhoneCall 
+                  phoneNumber="010-5940-0104"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl transition-colors"
+                >
+                  010-5940-0104 (평일 9-18시)
+                </PhoneCall>
               </CardContent>
             </Card>
           </div>
@@ -564,6 +732,7 @@ export default function HomePage() {
               <h4 className="font-bold text-lg text-blue-400">서비스</h4>
               <div className="space-y-3 text-gray-300">
                 <Link href="/quote" className="block hover:text-blue-400 transition-colors">맞춤 견적 요청</Link>
+                <Link href="/payment" className="block hover:text-green-400 transition-colors text-green-300 font-medium">💳 서비스 결제</Link>
                 <Link href="/reviews" className="block hover:text-blue-400 transition-colors">여행 후기</Link>
                 <Link href="/about" className="block hover:text-blue-400 transition-colors">회사 소개</Link>
                 <Link href="/referral" className="block hover:text-blue-400 transition-colors">레퍼럴 시스템</Link>
@@ -586,7 +755,7 @@ export default function HomePage() {
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-blue-400" />
                   <div>
-                    <p className="font-bold text-white">1588-0000</p>
+                    <p className="font-bold text-white">010-5940-0104</p>
                     <p className="text-sm">평일 9:00-18:00</p>
                   </div>
                 </div>

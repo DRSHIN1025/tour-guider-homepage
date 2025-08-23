@@ -4,12 +4,12 @@
   "description": "동남아 현지 가이드와 함께하는 특별한 맞춤 여행",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7F5EF",
-  "theme_color": "#2D5C4D",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
-  "categories": ["travel", "tourism", "lifestyle"],
-  "lang": "ko",
   "scope": "/",
+  "lang": "ko",
+  "categories": ["travel", "lifestyle", "business"],
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -24,52 +24,50 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/icon-72x72.png",
+      "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-desktop.png", 
-      "sizes": "1920x1080",
-      "type": "image/png",
-      "form_factor": "wide"
     }
   ],
   "shortcuts": [
     {
       "name": "견적 요청",
       "short_name": "견적",
-      "description": "맞춤 여행 견적을 요청하세요",
+      "description": "여행 견적을 요청합니다",
       "url": "/quote",
       "icons": [
         {
-          "src": "/icon-quote.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
         }
       ]
     },
     {
-      "name": "여행 후기",
-      "short_name": "후기",
-      "description": "다른 여행객들의 후기를 확인하세요",
-      "url": "/reviews",
+      "name": "레퍼럴",
+      "short_name": "레퍼럴",
+      "description": "친구를 추천하고 보상을 받으세요",
+      "url": "/referral",
       "icons": [
         {
-          "src": "/icon-reviews.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
         }
       ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 } 

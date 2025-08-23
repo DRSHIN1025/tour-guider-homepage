@@ -1,45 +1,69 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getAnalytics } from 'firebase/analytics';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAnalytics, isSupported } from 'firebase/analytics';
 
-// Firebase 설정 - 환경변수 우선, fallback 사용
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCJfso0a1JKqny2Qgn9sXJgxaL0Gz57wno",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "tour-guider-homepage.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "tour-guider-homepage",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "tour-guider-homepage.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "879427263594",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:879427263594:web:d43e9b06e0536e8a687e13",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-PT0Z1K0EWK"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Firebase 앱 초기화
 let app;
-try {
+if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  console.log('🔥 Firebase 앱 초기화 성공!');
-} catch (error) {
-  console.error('🔥 Firebase 앱 초기화 실패:', error);
-  throw error;
+} else {
+  app = getApps()[0];
 }
 
-// Firebase 서비스 내보내기
-export const auth = getAuth(app);
+// Firestore 초기화
 export const db = getFirestore(app);
+
+// Storage 초기화
 export const storage = getStorage(app);
 
-// Analytics (클라이언트 사이드에서만 초기화)
-let analytics = null;
+// Auth 초기화
+export const auth = getAuth(app);
+
+// Analytics 초기화 (브라우저에서만)
 if (typeof window !== 'undefined') {
+  isSupported().then((supported) => {
+    if (supported) {
+      try {
+        getAnalytics(app);
+      } catch (error) {
+        // Analytics 초기화 실패는 정상적인 상황일 수 있음
+      }
+    }
+  });
+}
+
+// 개발 환경에서 에뮬레이터 연결
+if (process.env.NODE_ENV === 'development') {
   try {
-    analytics = getAnalytics(app);
-    console.log('🔥 Firebase Analytics 초기화 성공!');
+    // Firestore 에뮬레이터
+    if (process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST) {
+      connectFirestoreEmulator(db, 'localhost', 8080);
+    }
+    
+    // Storage 에뮬레이터
+    if (process.env.NEXT_PUBLIC_STORAGE_EMULATOR_HOST) {
+      connectStorageEmulator(storage, 'localhost', 9199);
+    }
+    
+    // Auth 에뮬레이터
+    if (process.env.NEXT_PUBLIC_AUTH_EMULATOR_HOST) {
+      connectAuthEmulator(auth, 'http://localhost:9099');
+    }
   } catch (error) {
-    console.log('🔥 Firebase Analytics 초기화 실패 (정상):', error instanceof Error ? error.message : error);
+    // 에뮬레이터가 이미 연결된 경우 무시
   }
 }
 
-export { analytics };
 export default app;

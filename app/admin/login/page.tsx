@@ -45,9 +45,11 @@ export default function AdminLogin() {
         ipAddress: '127.0.0.1', // 실제로는 서버에서 가져옴
       };
 
-      localStorage.setItem('adminAuth', 'true');
-      localStorage.setItem('adminUser', JSON.stringify(adminSession));
-      localStorage.setItem('adminSessionStart', Date.now().toString());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('adminAuth', 'true');
+        localStorage.setItem('adminUser', JSON.stringify(adminSession));
+        localStorage.setItem('adminSessionStart', Date.now().toString());
+      }
       
       // 로그인 성공 로그
       console.log('관리자 로그인 성공:', {
@@ -67,7 +69,7 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-2xl space-y-8">
         {/* 보안 경고 */}
         <Alert className="border-orange-200 bg-orange-50">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
@@ -78,22 +80,22 @@ export default function AdminLogin() {
         </Alert>
 
         <Card className="shadow-xl border-0">
-          <CardHeader className="text-center pb-6">
-            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <Shield className="w-8 h-8 text-red-600" />
+          <CardHeader className="text-center pb-8">
+            <div className="mx-auto w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6">
+              <Shield className="w-12 h-12 text-red-600" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
+            <CardTitle className="text-4xl font-bold text-gray-900 mb-4">
               관리자 시스템 로그인
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-xl text-gray-600 mt-4">
               투어가이더 관리자 전용 보안 시스템
             </p>
           </CardHeader>
           
-          <CardContent className="space-y-6">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+          <CardContent className="space-y-8 px-12 pb-12">
+            <form onSubmit={handleLogin} className="space-y-8">
+              <div className="space-y-4">
+                <Label htmlFor="username" className="text-xl font-medium text-gray-700">
                   관리자 ID
                 </Label>
                 <Input
@@ -102,14 +104,14 @@ export default function AdminLogin() {
                   placeholder="관리자 아이디를 입력하세요"
                   value={credentials.username}
                   onChange={(e) => setCredentials({...credentials, username: e.target.value})}
-                  className="h-12 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                  className="h-16 text-xl px-6 border-gray-300 focus:border-red-500 focus:ring-red-500"
                   required
                   disabled={loading}
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <div className="space-y-4">
+                <Label htmlFor="password" className="text-xl font-medium text-gray-700">
                   비밀번호
                 </Label>
                 <div className="relative">
@@ -119,16 +121,16 @@ export default function AdminLogin() {
                     placeholder="비밀번호를 입력하세요"
                     value={credentials.password}
                     onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                    className="h-12 pr-12 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                    className="h-16 text-xl px-6 pr-14 border-gray-300 focus:border-red-500 focus:ring-red-500"
                     required
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
                   </button>
                 </div>
               </div>
@@ -144,17 +146,17 @@ export default function AdminLogin() {
 
               <Button 
                 type="submit" 
-                className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                className="w-full h-20 text-2xl bg-red-600 hover:bg-red-700 text-white font-semibold"
                 disabled={loading || loginAttempts >= 5}
               >
                 {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     인증 중...
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <Lock className="w-5 h-5" />
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-7 h-7" />
                     보안 로그인
                   </div>
                 )}
@@ -162,12 +164,12 @@ export default function AdminLogin() {
             </form>
 
             {/* 보안 정보 */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <h4 className="font-medium text-sm text-gray-800 flex items-center gap-2">
-                <Shield className="w-4 h-4" />
+            <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+              <h4 className="font-medium text-lg text-gray-800 flex items-center gap-2">
+                <Shield className="w-6 h-6" />
                 보안 정책
               </h4>
-              <div className="text-xs text-gray-600 space-y-1">
+              <div className="text-base text-gray-600 space-y-2">
                 <p>• 세션 자동 만료: 30분</p>
                 <p>• 로그인 시도 제한: 5회</p>
                 <p>• 모든 접근 기록 저장</p>
@@ -176,12 +178,12 @@ export default function AdminLogin() {
             </div>
 
             {/* 테스트 정보 */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="font-medium text-sm text-blue-800 mb-2">🔐 테스트 계정</h4>
-              <div className="text-xs text-blue-700 space-y-1">
+            <div className="bg-blue-50 rounded-lg p-6">
+              <h4 className="font-medium text-lg text-blue-800 mb-3">🔐 테스트 계정</h4>
+              <div className="text-base text-blue-700 space-y-2">
                 <p><strong>ID:</strong> admin</p>
                 <p><strong>PW:</strong> tourguider2024!</p>
-                <p className="text-blue-600 mt-2">
+                <p className="text-blue-600 mt-3 text-sm">
                   * 실제 운영 시에는 강력한 비밀번호로 변경하세요
                 </p>
               </div>

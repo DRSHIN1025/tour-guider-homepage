@@ -207,11 +207,12 @@ const destinations = [
 ];
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
-export default function ProductDetailPage({ params }: PageProps) {
-  const destination = destinations.find(d => d.slug === params.slug);
+export default async function ProductDetailPage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const destination = destinations.find(d => d.slug === resolvedParams.slug);
   
   if (!destination) {
     notFound();
@@ -465,7 +466,7 @@ export default function ProductDetailPage({ params }: PageProps) {
 
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-2xl mx-auto">
               <h3 className="text-2xl font-bold mb-4">📞 전화 상담</h3>
-              <p className="text-xl font-bold mb-2">1588-0000</p>
+                              <p className="text-xl font-bold mb-2">010-5940-0104</p>
               <p className="opacity-90">평일 9:00-18:00 (토요일 9:00-15:00)</p>
             </div>
           </div>
@@ -520,7 +521,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-blue-400" />
                   <div>
-                    <p className="font-bold text-white">1588-0000</p>
+                    <p className="font-bold text-white">010-5940-0104</p>
                     <p className="text-sm">평일 9:00-18:00</p>
                   </div>
                 </div>

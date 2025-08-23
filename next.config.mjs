@@ -36,11 +36,39 @@ const nextConfig = {
   // 실험적 기능
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
 
   // 성능 최적화
   poweredByHeader: false,
   reactStrictMode: true,
+
+  // 웹팩 최적화
+  webpack: (config, { dev, isServer }) => {
+    // SVG 파일 처리
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+
+    // 서버 사이드에서 클라이언트 전용 모듈 처리
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'firebase': 'commonjs firebase',
+        '@stripe/stripe-js': 'commonjs @stripe/stripe-js',
+      });
+    }
+
+    return config;
+  },
 
   // 헤더 설정 - Firebase를 위해 매우 관대한 CSP
   async headers() {
@@ -98,7 +126,7 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
-  },
+          },
         ],
       },
       {

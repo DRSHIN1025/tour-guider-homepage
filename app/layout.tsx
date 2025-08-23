@@ -1,26 +1,21 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Analytics } from "@/components/Analytics"
-import Script from "next/script"
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { Suspense, lazy } from 'react'
 
-const inter = Inter({ subsets: ["latin"] })
+// 지연 로딩 컴포넌트
+const PWAInstaller = lazy(() => import('@/components/PWAInstaller'))
+const NotificationContainer = lazy(() => import('@/components/NotificationContainer'))
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: {
-    default: "투어가이더 - 동남아 맞춤 여행의 새로운 시작",
-    template: "%s | 투어가이더"
-  },
-  description: "동남아 현지 가이드와 함께하는 특별한 맞춤 여행. 베트남, 태국, 필리핀 등 동남아 전문 여행사. 현지 가이드 직접 매칭, 맞춤 일정 제안, 안전한 여행 보장.",
-  keywords: [
-    "동남아 여행", "맞춤 여행", "현지 가이드", "베트남 여행", "태국 여행", "필리핀 여행", 
-    "여행 견적", "가족 여행", "효도 여행", "혼자 여행", "중년 여행", "안전한 여행",
-    "투어가이더", "동남아 투어", "해외여행", "여행사", "여행 플래너"
-  ],
-  authors: [{ name: "투어가이더" }],
-  creator: "투어가이더",
-  publisher: "투어가이더",
+  title: 'K-BIZ TRAVEL - 동남아 특화 맞춤여행',
+  description: '동남아시아 여행 전문 여행사. 맞춤형 여행 계획, 현지 가이드, 특별한 경험을 제공합니다.',
+  keywords: '동남아, 여행, 맞춤여행, 가이드, 태국, 베트남, 캄보디아, 라오스, 미얀마, 말레이시아, 싱가포르, 인도네시아, 필리핀',
+  authors: [{ name: 'K-BIZ TRAVEL' }],
+  creator: 'K-BIZ TRAVEL',
+  publisher: 'K-BIZ TRAVEL',
   formatDetection: {
     email: false,
     address: false,
@@ -31,25 +26,25 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "투어가이더 - 동남아 맞춤 여행의 새로운 시작",
-    description: "동남아 현지 가이드와 함께하는 특별한 맞춤 여행. 현지 가이드 직접 매칭, 맞춤 일정 제안, 안전한 여행 보장.",
+    title: 'K-BIZ TRAVEL - 동남아 특화 맞춤여행',
+    description: '동남아시아 여행 전문 여행사. 맞춤형 여행 계획, 현지 가이드, 특별한 경험을 제공합니다.',
     url: 'https://tourguider.com',
-    siteName: '투어가이더',
+    siteName: 'K-BIZ TRAVEL',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: '투어가이더 - 동남아 맞춤 여행',
-      }
+        alt: 'K-BIZ TRAVEL - 동남아 특화 맞춤여행',
+      },
     ],
     locale: 'ko_KR',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "투어가이더 - 동남아 맞춤 여행의 새로운 시작",
-    description: "동남아 현지 가이드와 함께하는 특별한 맞춤 여행",
+    title: 'K-BIZ TRAVEL - 동남아 특화 맞춤여행',
+    description: '동남아시아 여행 전문 여행사. 맞춤형 여행 계획, 현지 가이드, 특별한 경험을 제공합니다.',
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -65,9 +60,8 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'your-google-verification-code',
-    other: {
-      'naver-site-verification': 'your-naver-verification-code',
-    },
+    yandex: 'your-yandex-verification-code',
+    yahoo: 'your-yahoo-verification-code',
   },
 }
 
@@ -79,82 +73,118 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        {/* 구조화된 데이터 - LocalBusiness */}
-        <Script
-          id="structured-data-local-business"
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#3B82F6" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="K-BIZ TRAVEL" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        
+        {/* Preconnect to external domains */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://firebasestorage.googleapis.com" />
+        <link rel="preconnect" href="https://googleapis.com" />
+        
+        {/* DNS Prefetch */}
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//firebasestorage.googleapis.com" />
+        <link rel="dns-prefetch" href="//googleapis.com" />
+      </head>
+      <body className={inter.className}>
+        {/* Structured Data */}
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "TravelAgency",
-              "name": "투어가이더",
-              "description": "동남아 현지 가이드와 함께하는 특별한 맞춤 여행",
+              "@type": "LocalBusiness",
+              "name": "K-BIZ TRAVEL",
+              "description": "동남아시아 여행 전문 여행사. 맞춤형 여행 계획, 현지 가이드, 특별한 경험을 제공합니다.",
               "url": "https://tourguider.com",
-              "logo": "https://tourguider.com/logo.png",
-              "image": "https://tourguider.com/og-image.jpg",
-              "telephone": "1588-0000",
-              "email": "help@tourguider.com",
+              "telephone": "+82-10-5940-0104",
+              "email": "info@tourguider.com",
               "address": {
                 "@type": "PostalAddress",
                 "addressCountry": "KR",
-                "addressLocality": "서울",
-                "addressRegion": "서울특별시"
+                "addressRegion": "Seoul",
+                "addressLocality": "Seoul"
               },
               "geo": {
                 "@type": "GeoCoordinates",
-                "latitude": "37.5665",
-                "longitude": "126.9780"
+                "latitude": 37.5665,
+                "longitude": 126.9780
               },
               "openingHours": "Mo-Fr 09:00-18:00",
               "priceRange": "$$",
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.9",
-                "reviewCount": "1000",
-                "bestRating": "5",
-                "worstRating": "1"
-              },
+              "currenciesAccepted": "KRW, USD",
+              "paymentAccepted": "Credit Card, Bank Transfer",
               "areaServed": [
                 {
                   "@type": "Country",
-                  "name": "베트남"
-                },
-                {
-                  "@type": "Country", 
-                  "name": "태국"
+                  "name": "Thailand"
                 },
                 {
                   "@type": "Country",
-                  "name": "필리핀"
+                  "name": "Vietnam"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Cambodia"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Laos"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Myanmar"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Malaysia"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Singapore"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Indonesia"
+                },
+                {
+                  "@type": "Country",
+                  "name": "Philippines"
                 }
               ],
-              "serviceType": "맞춤 여행 서비스",
+              "serviceType": "Travel Agency",
               "hasOfferCatalog": {
                 "@type": "OfferCatalog",
-                "name": "동남아 여행 패키지",
+                "name": "동남아 여행 상품",
                 "itemListElement": [
                   {
                     "@type": "Offer",
                     "itemOffered": {
-                      "@type": "TouristTrip",
-                      "name": "베트남 맞춤 여행",
-                      "description": "현지 가이드와 함께하는 베트남 맞춤 여행"
-                    }
-                  },
-                  {
-                    "@type": "Offer", 
-                    "itemOffered": {
-                      "@type": "TouristTrip",
-                      "name": "태국 맞춤 여행",
-                      "description": "현지 가이드와 함께하는 태국 맞춤 여행"
+                      "@type": "Service",
+                      "name": "맞춤형 여행 계획",
+                      "description": "개인 맞춤형 여행 계획 수립 서비스"
                     }
                   },
                   {
                     "@type": "Offer",
                     "itemOffered": {
-                      "@type": "TouristTrip", 
-                      "name": "필리핀 맞춤 여행",
-                      "description": "현지 가이드와 함께하는 필리핀 맞춤 여행"
+                      "@type": "Service",
+                      "name": "현지 가이드",
+                      "description": "현지 전문 가이드 서비스"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "여행 상담",
+                      "description": "전문 여행 상담 서비스"
                     }
                   }
                 ]
@@ -162,89 +192,37 @@ export default function RootLayout({
             })
           }}
         />
-
-        {/* 구조화된 데이터 - WebSite */}
-        <Script
-          id="structured-data-website"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "투어가이더",
-              "url": "https://tourguider.com",
-              "description": "동남아 현지 가이드와 함께하는 특별한 맞춤 여행",
-              "publisher": {
-                "@type": "Organization",
-                "name": "투어가이더"
-              },
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": {
-                  "@type": "EntryPoint",
-                  "urlTemplate": "https://tourguider.com/search?q={search_term_string}"
-                },
-                "query-input": "required name=search_term_string"
-              }
-            })
-          }}
-        />
-
-        {/* Google Tag Manager */}
-        <Script
-          id="gtm"
-          strategy="afterInteractive"
+        
+        {children}
+        
+        {/* PWA Installer */}
+        <Suspense fallback={null}>
+          <PWAInstaller />
+        </Suspense>
+        
+        {/* Notification Container */}
+        <Suspense fallback={null}>
+          <NotificationContainer position="top-right" maxNotifications={5} />
+        </Suspense>
+        
+        {/* Service Worker Registration */}
+        <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','dataLayer','GTM-XXXXXXX');
-            `
+              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
           }}
         />
-
-        {/* 카카오 SDK */}
-        <Script 
-          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" 
-          integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" 
-          crossOrigin="anonymous"
-          strategy="beforeInteractive"
-        />
-        
-        {/* 네이버 SDK */}
-        <Script 
-          src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" 
-          strategy="beforeInteractive"
-        />
-        
-        {/* 구글 SDK */}
-        <Script 
-          src="https://accounts.google.com/gsi/client" 
-          strategy="beforeInteractive"
-        />
-      </head>
-      <body className={inter.className}>
-        {/* Google Tag Manager (noscript) */}
-        <noscript>
-          <iframe 
-            src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
-            height="0" 
-            width="0" 
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
-        
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Analytics />
-        </ThemeProvider>
       </body>
     </html>
   )

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 declare global {
   interface Window {
@@ -13,147 +13,109 @@ declare global {
 interface KakaoLoginProps {
   onSuccess?: (user: any) => void;
   onError?: (error: any) => void;
+  className?: string;
+  children?: React.ReactNode;
 }
 
-export default function KakaoLogin({ onSuccess, onError }: KakaoLoginProps) {
-  const [isInitialized, setIsInitialized] = useState(false);
-  const router = useRouter();
+export function KakaoLogin({ onSuccess, onError, className, children }: KakaoLoginProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isKakaoLoaded, setIsKakaoLoaded] = useState(false);
 
   useEffect(() => {
-    const initializeKakao = () => {
-      if (window.Kakao && !window.Kakao.isInitialized()) {
-        // 환경변수에서 카카오 앱 키 가져오기
-        const kakaoAppKey = process.env.NEXT_PUBLIC_KAKAO_APP_KEY || 'demo-key';
-        
-        try {
-          window.Kakao.init(kakaoAppKey);
-          setIsInitialized(true);
-          console.log('카카오 SDK 초기화 완료');
-        } catch (error) {
-          console.error('카카오 SDK 초기화 실패:', error);
-          // 데모 모드로 동작
-          setIsInitialized(true);
-        }
-      } else if (window.Kakao?.isInitialized()) {
-        setIsInitialized(true);
+    // Kakao SDK가 이미 로드되어 있는지 확인
+    if (window.Kakao && window.Kakao.isInitialized()) {
+      setIsKakaoLoaded(true);
+      return;
+    }
+
+    // Kakao SDK 로드
+    const script = document.createElement('script');
+    script.src = 'https://developers.kakao.com/sdk/js/kakao.js';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.Kakao) {
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_APP_KEY);
+        setIsKakaoLoaded(true);
       }
     };
+    document.head.appendChild(script);
 
-    // 스크립트가 로드될 때까지 대기
-    const checkKakao = setInterval(() => {
-      if (window.Kakao) {
-        initializeKakao();
-        clearInterval(checkKakao);
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
       }
-    }, 100);
-
-    return () => clearInterval(checkKakao);
+    };
   }, []);
 
   const handleKakaoLogin = () => {
-    if (!isInitialized) {
-      alert('카카오 로그인을 초기화하는 중입니다. 잠시 후 다시 시도해주세요.');
-      return;
-    }
-
-    // 데모 모드 체크 (실제 카카오 앱 키가 없는 경우)
-    const isDemo = !process.env.NEXT_PUBLIC_KAKAO_APP_KEY || process.env.NEXT_PUBLIC_KAKAO_APP_KEY === 'demo-key';
-
-    if (isDemo) {
-      // 데모 모드: 가상의 사용자 정보로 로그인
-      const demoUser = {
-        id: 'demo-admin',
-        nickname: '투어가이더 관리자',
-        email: 'admin@tourguider.com',
-        profileImage: '',
-        loginType: 'kakao'
-      };
-
-      localStorage.setItem('adminAuth', 'true');
-      localStorage.setItem('adminUser', JSON.stringify(demoUser));
-      
-      if (onSuccess) {
-        onSuccess(demoUser);
-      } else {
-        router.push('/admin');
+    if (!isKakaoLoaded) {
+      if (onError) {
+        onError(new Error('카카오 로그인을 초기화하는 중입니다. 잠시 후 다시 시도해주세요.'));
       }
       return;
     }
 
-    // 실제 카카오 로그인
-    if (!window.Kakao) {
-      alert('카카오 로그인 서비스를 불러올 수 없습니다.');
-      return;
-    }
+    setIsLoading(true);
 
-    window.Kakao.Auth.login({
-      success: function(authObj: any) {
-        console.log('카카오 로그인 성공:', authObj);
-        
-        // 사용자 정보 가져오기
-        window.Kakao.API.request({
-          url: '/v2/user/me',
-          success: function(res: any) {
-            console.log('사용자 정보:', res);
-            
-            const user = {
-              id: res.id,
-              nickname: res.properties?.nickname || '사용자',
-              email: res.kakao_account?.email || '',
-              profileImage: res.properties?.profile_image || '',
-              loginType: 'kakao'
-            };
+    try {
+      window.Kakao.Auth.login({
+        success: function(authObj: any) {
+          window.Kakao.API.request({
+            url: '/v2/user/me',
+            success: function(res: any) {
+              const userData = {
+                id: res.id.toString(),
+                email: res.kakao_account?.email || '',
+                name: res.properties?.nickname || '카카오 사용자',
+                picture: res.properties?.profile_image || '',
+                loginType: 'kakao'
+              };
 
-            // 관리자 권한 확인 (실제로는 서버에서 확인해야 함)
-            // 여기서는 간단히 특정 조건으로 관리자 판별
-            const isAdmin = res.kakao_account?.email === 'admin@tourguider.com' || 
-                           res.properties?.nickname === '투어가이더관리자';
-
-            if (isAdmin) {
-              // 관리자 인증 정보 저장
-              localStorage.setItem('adminAuth', 'true');
-              localStorage.setItem('adminUser', JSON.stringify(user));
-              
               if (onSuccess) {
-                onSuccess(user);
-              } else {
-                router.push('/admin');
+                onSuccess(userData);
               }
-            } else {
-              alert('관리자 권한이 없습니다. 관리자 계정으로 로그인해주세요.');
-              window.Kakao.Auth.logout();
+              setIsLoading(false);
+            },
+            fail: function(error: any) {
+              setIsLoading(false);
+              if (onError) {
+                onError(error);
+              }
             }
-          },
-          fail: function(error: any) {
-            console.error('사용자 정보 가져오기 실패:', error);
-            if (onError) {
-              onError(error);
-            }
+          });
+        },
+        fail: function(err: any) {
+          setIsLoading(false);
+          if (onError) {
+            onError(err);
           }
-        });
-      },
-      fail: function(err: any) {
-        console.error('카카오 로그인 실패:', err);
-        if (onError) {
-          onError(err);
         }
+      });
+    } catch (error) {
+      setIsLoading(false);
+      if (onError) {
+        onError(error);
       }
-    });
+    }
   };
 
   return (
-    <Button 
+    <Button
       onClick={handleKakaoLogin}
-      className="w-full bg-[#FEE500] hover:bg-[#FFEB00] text-black font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-3"
-      disabled={!isInitialized}
+      disabled={isLoading || !isKakaoLoaded}
+      className={className}
+      variant="outline"
     >
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path 
-          d="M10 0C4.477 0 0 3.58 0 8c0 2.797 1.8 5.262 4.5 6.722L3.5 18.5l4.764-2.382C8.83 16.04 9.402 16 10 16c5.523 0 10-3.58 10-8S15.523 0 10 0z" 
-          fill="#3C1E1E"
-        />
-      </svg>
-      {isInitialized ? '카카오 로그인' : '로딩 중...'}
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 3c5.799 0 10.5 4.701 10.5 10.5S17.799 24 12 24S1.5 19.299 1.5 13.5S6.201 3 12 3m0 1.5c-4.971 0-9 4.029-9 9s4.029 9 9 9s9-4.029 9-9s-4.029-9-9-9z"/>
+          <path d="M12 6.75c-2.071 0-3.75 1.679-3.75 3.75S9.929 14.25 12 14.25s3.75-1.679 3.75-3.75S14.071 6.75 12 6.75z"/>
+        </svg>
+      )}
+      {children || '카카오로 로그인'}
     </Button>
   );
 } 

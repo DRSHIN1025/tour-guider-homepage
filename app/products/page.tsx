@@ -298,7 +298,7 @@ export default function ProductsPage() {
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-blue-400" />
                   <div>
-                    <p className="font-bold text-white">1588-0000</p>
+                    <p className="font-bold text-white">010-5940-0104</p>
                     <p className="text-sm">평일 9:00-18:00</p>
                   </div>
                 </div>

@@ -77,15 +77,15 @@ export default function AboutPage() {
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white">
-              합리적인 비용, 맞춤형 서비스<br />
+              동남아 현지 전문가와<br />
               <span className="bg-gradient-to-r from-yellow-200 to-white bg-clip-text text-transparent">
-                차별화된 프로그램, 완성되는 트렌드
+                맞춤형 여행의 완성
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-4xl mx-auto">
-              K-BIZ TRAVEL은 2023년 7월 설립된 종합여행업 전문기업으로<br />
-              해외 출장업무 지원, 항공 예약 및 여행상품 개발, 인바운드 관광객 유치를 전문으로 합니다.
+            <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-3xl mx-auto">
+              <strong>종합여행업 전문기업</strong> | 현지 가이드 직접 연결 | 24시간 안전 보장<br />
+              합리적 가격으로 차별화된 맞춤 여행 경험을 제공합니다
             </p>
             
             <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
@@ -344,7 +344,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-3">전화 상담</h3>
                   <p className="text-gray-600 mb-4">평일 9:00-18:00</p>
-                  <p className="text-2xl font-bold text-blue-600 mb-4">1588-0000</p>
+                  <p className="text-2xl font-bold text-blue-600 mb-4">010-5940-0104</p>
                   <p className="text-gray-600">
                     전문 상담사가 맞춤 여행 계획을 도와드립니다
                   </p>
@@ -431,7 +431,7 @@ export default function AboutPage() {
                 <div className="flex items-center space-x-3">
                   <Phone className="w-5 h-5 text-blue-400" />
                   <div>
-                    <p className="font-bold text-white">1588-0000</p>
+                    <p className="font-bold text-white">010-5940-0104</p>
                     <p className="text-sm">평일 9:00-18:00</p>
                   </div>
                 </div>

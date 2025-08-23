@@ -9,8 +9,16 @@
 - [x] **견적 요청 시스템**
 - [x] **관리자 대시보드**
 - [x] **사용자 대시보드**
+- [x] **파일 업로드/다운로드** (Firebase Storage + 프록시 API)
 - [x] **반응형 디자인**
 - [x] **SEO 최적화**
+
+### 🔧 **최근 수정사항 (관리자 파일 다운로드 개선)**
+- [x] **환경별 다운로드 전략** - 로컬: API 프록시, 배포: 직접 다운로드
+- [x] **Firebase Storage CORS** - 브라우저 보안 정책 우회 방법 적용
+- [x] **파일 타입 지원** - DOC, PPT, HWP, 이미지, PDF 등 모든 형식 지원
+- [x] **API 프록시 라우트** - `/api/download`로 서버사이드 다운로드 처리
+- [x] **로컬 환경 감지** - localhost, 127.0.0.1, 192.168.x.x 자동 감지
 
 ---
 
@@ -128,6 +136,51 @@ Site settings → Environment variables에서 위와 동일한 환경 변수 추
 
 ## 🚨 **문제 해결**
 
+### **파일 다운로드 문제 해결** 📁
+> **문제**: 관리자 페이지에서 첨부파일 다운로드가 작동하지 않는 경우
+
+#### **개발환경 vs 배포환경 차이점**
+| 환경 | 다운로드 방법 | CORS 제한 | 해결책 |
+|------|---------------|-----------|---------|
+| **로컬 (localhost)** | API 프록시 | ❌ 제한됨 | `/api/download` 서버사이드 처리 |
+| **배포 (도메인)** | 직접 다운로드 | ✅ 허용됨 | Firebase Storage URL 직접 접근 |
+
+#### **자동 해결 시스템**
+현재 코드에서 자동으로 환경을 감지하여 적절한 다운로드 방법을 선택합니다:
+```javascript
+// 로컬 환경 자동 감지
+const isLocalhost = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' ||
+                    window.location.hostname.includes('192.168.');
+
+if (isLocalhost) {
+  // API 프록시를 통한 다운로드
+  fetch('/api/download', { method: 'POST', ... })
+} else {
+  // 직접 다운로드
+  fetch(firebaseUrl)
+}
+```
+
+#### **Firebase Storage CORS 설정**
+배포 환경에서 직접 다운로드가 안 되는 경우:
+```bash
+# Firebase CLI 설치
+npm install -g firebase-tools
+
+# CORS 규칙 생성 (cors.json)
+[
+  {
+    "origin": ["*"],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600
+  }
+]
+
+# CORS 적용
+gsutil cors set cors.json gs://your-bucket-name
+```
+
 ### **빌드 오류**
 ```bash
 # 의존성 재설치
@@ -149,12 +202,11 @@ npm run build -- --no-cache
 
 ---
 
-## 📞 **지원**
+## 📞 연락처 정보
 
-배포 중 문제가 발생하면:
 - **이메일**: help@tourguider.com
-- **전화**: 1588-0000
-- **카카오톡**: [카카오채널](https://pf.kakao.com/_your_channel_id)
+- **전화**: 010-5940-0104
+- **카카오톡**: @투어가이더
 
 ---
 
