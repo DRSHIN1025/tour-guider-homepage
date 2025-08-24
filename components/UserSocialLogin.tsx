@@ -70,87 +70,72 @@ export function UserSocialLogin({ onSuccess, onError, className, children }: Use
     setIsLoading(true);
     setCurrentProvider(provider);
 
-    // 데모 사용자 데이터 생성
-    const demoUserData = {
-      id: `${provider}-demo-user-${Date.now()}`,
-      email: `${provider}-demo@tourguider.com`,
-      name: `${provider} 데모 사용자`,
-      nickname: `${provider} Demo`,
-      picture: '',
-      loginType: provider,
-      isDemo: true
-    };
+    try {
+      // 데모 사용자 데이터 생성
+      const demoUserData = {
+        id: `${provider}-demo-user-${Date.now()}`,
+        email: `${provider}-demo@tourguider.com`,
+        name: `${provider} 데모 사용자`,
+        nickname: `${provider} Demo`,
+        picture: '',
+        loginType: provider,
+        isDemo: true
+      };
 
-    // onSuccess 콜백을 통해 상위 컴포넌트에서 처리하도록 함
-    setTimeout(() => {
-      handleSocialSuccess(demoUserData);
-    }, 1000);
+      console.log('데모 로그인 시도:', provider, demoUserData);
+
+      // onSuccess 콜백을 통해 상위 컴포넌트에서 처리하도록 함
+      setTimeout(() => {
+        console.log('데모 로그인 성공 콜백 실행');
+        handleSocialSuccess(demoUserData);
+      }, 1000);
+    } catch (error) {
+      console.error('데모 로그인 오류:', error);
+      handleSocialError(error);
+    }
   };
 
   return (
     <div className={`space-y-3 ${className || ''}`}>
-      <GoogleLogin
-        onSuccess={handleSocialSuccess}
-        onError={handleSocialError}
-        className="w-full"
-      />
+      <Button
+        onClick={() => handleDemoLogin('google')}
+        disabled={isLoading && currentProvider === 'google'}
+        className="w-full bg-white text-gray-900 hover:bg-gray-100 border border-gray-300"
+      >
+        {isLoading && currentProvider === 'google' ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <span className="text-lg">G</span>
+        )}
+        Google로 로그인
+      </Button>
       
-      <KakaoLogin
-        onSuccess={handleSocialSuccess}
-        onError={handleSocialError}
-        className="w-full"
-      />
+      <Button
+        onClick={() => handleDemoLogin('kakao')}
+        disabled={isLoading && currentProvider === 'kakao'}
+        className="w-full bg-yellow-400 text-black hover:bg-yellow-500"
+      >
+        {isLoading && currentProvider === 'kakao' ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <span className="text-lg">카</span>
+        )}
+        카카오로 로그인
+      </Button>
       
-      <NaverLogin
-        onSuccess={handleSocialSuccess}
-        onError={handleSocialError}
-        className="w-full"
-      />
+      <Button
+        onClick={() => handleDemoLogin('naver')}
+        disabled={isLoading && currentProvider === 'naver'}
+        className="w-full bg-green-500 text-white hover:bg-green-600"
+      >
+        {isLoading && currentProvider === 'naver' ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <span className="text-lg">N</span>
+        )}
+        네이버로 로그인
+      </Button>
 
-      {/* 데모 로그인 버튼들 (개발 환경에서만 표시) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-sm text-gray-500 mb-3 text-center">개발용 데모 로그인</p>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              onClick={() => handleDemoLogin('google')}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-            >
-              {isLoading && currentProvider === 'google' ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                'Google 데모'
-              )}
-            </Button>
-            <Button
-              onClick={() => handleDemoLogin('kakao')}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-            >
-              {isLoading && currentProvider === 'kakao' ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                'Kakao 데모'
-              )}
-            </Button>
-            <Button
-              onClick={() => handleDemoLogin('naver')}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-            >
-              {isLoading && currentProvider === 'naver' ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                'Naver 데모'
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 } 

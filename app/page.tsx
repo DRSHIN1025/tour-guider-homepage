@@ -144,9 +144,8 @@ export default function HomePage() {
             
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/about" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">회사소개</Link>
-              <Link href="/quote" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">견적 요청</Link>
-              <Link href="/payment" className="text-green-600 hover:text-green-700 transition-colors font-medium border border-green-200 px-3 py-1 rounded-lg hover:bg-green-50">💳 서비스 결제</Link>
-              <Link href="/reviews" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">여행 후기</Link>
+                                   <Link href="/quote" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">견적 요청</Link>
+                     <Link href="/reviews" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">여행 후기</Link>
               <Link href="/referral" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">레퍼럴</Link>
               {authState.isAuthenticated && (
                 <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">대시보드</Link>
@@ -257,15 +256,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 
-                <Link href="/payment">
-                  <Button 
-                    size="lg" 
-                    className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
-                  >
-                    💳 전문 상담 서비스
-                    <ArrowRight className="ml-3 w-7 h-7" />
-                  </Button>
-                </Link>
+                
               </div>
               
               {/* 알림 테스트 버튼 (개발용) */}
@@ -732,7 +723,7 @@ export default function HomePage() {
               <h4 className="font-bold text-lg text-blue-400">서비스</h4>
               <div className="space-y-3 text-gray-300">
                 <Link href="/quote" className="block hover:text-blue-400 transition-colors">맞춤 견적 요청</Link>
-                <Link href="/payment" className="block hover:text-green-400 transition-colors text-green-300 font-medium">💳 서비스 결제</Link>
+                
                 <Link href="/reviews" className="block hover:text-blue-400 transition-colors">여행 후기</Link>
                 <Link href="/about" className="block hover:text-blue-400 transition-colors">회사 소개</Link>
                 <Link href="/referral" className="block hover:text-blue-400 transition-colors">레퍼럴 시스템</Link>

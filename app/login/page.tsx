@@ -76,27 +76,34 @@ export default function UserLogin() {
         isUser: true // 일반 사용자 플래그
       };
       
-      // 훅을 사용한 로그인
-      login(userData);
+      console.log('로그인 시도 중:', userData);
       
+      // 훅을 사용한 로그인
+      const loginResult = login(userData);
+      
+      console.log('로그인 결과:', loginResult);
       console.log('사용자 소셜 로그인 성공:', userData);
+      
+      // 에러 초기화
+      setError('');
       
       // 성공 메시지와 함께 페이지 이동
       alert(`${user.loginType} 로그인 성공! 메인 페이지로 이동합니다.`);
       
       // 페이지 이동
       setTimeout(() => {
-        window.location.href = '/';
+        router.push('/');
       }, 100);
     } catch (error) {
       console.error('소셜 로그인 콜백 처리 오류:', error);
-      setError('로그인 처리 중 오류가 발생했습니다.');
+      handleSocialError({ message: `로그인 처리 중 오류가 발생했습니다: ${error}` });
     }
   };
 
   const handleSocialError = (error: any) => {
-    setError('소셜 로그인에 실패했습니다. 다시 시도해주세요.');
     console.error('소셜 로그인 오류:', error);
+    const errorMessage = error?.message || '소셜 로그인에 실패했습니다. 다시 시도해주세요.';
+    setError(errorMessage);
   };
 
   return (
