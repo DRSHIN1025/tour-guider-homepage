@@ -35,6 +35,14 @@ interface PushSubscription {
 
 export async function POST(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const body: PushNotificationRequest = await req.json();
     const { 
       title, 
@@ -55,18 +63,25 @@ export async function POST(req: NextRequest) {
     }
 
     // 구독자 조회
-    let subscriptionsQuery = query(
+    let subscriptionsQuery = db ? query(
       collection(db, 'pushSubscriptions'),
       where('isActive', '==', true)
-    );
+    ) : null;
+
+    if (!subscriptionsQuery) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     if (targetUsers) {
-      if (targetUsers.userEmails && targetUsers.userEmails.length > 0) {
+      if (targetUsers.userEmails && targetUsers.userEmails.length > 0 && subscriptionsQuery) {
         subscriptionsQuery = query(
           subscriptionsQuery,
           where('userEmail', 'in', targetUsers.userEmails)
         );
-      } else if (targetUsers.userIds && targetUsers.userIds.length > 0) {
+      } else if (targetUsers.userIds && targetUsers.userIds.length > 0 && subscriptionsQuery) {
         subscriptionsQuery = query(
           subscriptionsQuery,
           where('userId', 'in', targetUsers.userIds)
@@ -75,7 +90,13 @@ export async function POST(req: NextRequest) {
       // allUsers가 true이면 모든 활성 구독자에게 전송
     }
 
-    const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
+    const subscriptionsSnapshot = subscriptionsQuery ? await getDocs(subscriptionsQuery) : null;
+    if (!subscriptionsSnapshot) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     const subscriptions = subscriptionsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -103,7 +124,13 @@ export async function POST(req: NextRequest) {
       status: 'pending'
     };
 
-    const logRef = await addDoc(collection(db, 'pushNotificationLogs'), notificationLog);
+    const logRef = db ? await addDoc(collection(db, 'pushNotificationLogs'), notificationLog) : null;
+    if (!logRef) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     // 실제 푸시 알림 전송 (실제 구현에서는 web-push 라이브러리 사용)
     const sentResults = await Promise.allSettled(
@@ -158,15 +185,17 @@ export async function POST(req: NextRequest) {
     const failedSends = sentResults.length - successfulSends;
 
     // 로그 업데이트
-    await addDoc(collection(db, 'pushNotificationResults'), {
-      logId: logRef.id,
-      results: sentResults.map(result => 
-        result.status === 'fulfilled' ? result.value : { status: 'failed', message: 'Promise rejected' }
-      ),
-      successfulCount: successfulSends,
-      failedCount: failedSends,
-      completedAt: new Date()
-    });
+    if (db) {
+      await addDoc(collection(db, 'pushNotificationResults'), {
+        logId: logRef.id,
+        results: sentResults.map(result => 
+          result.status === 'fulfilled' ? result.value : { status: 'failed', message: 'Promise rejected' }
+        ),
+        successfulCount: successfulSends,
+        failedCount: failedSends,
+        completedAt: new Date()
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -192,20 +221,41 @@ export async function POST(req: NextRequest) {
 // 스케줄된 알림 조회
 export async function GET(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    let q = query(
+    let q = db ? query(
       collection(db, 'pushNotificationLogs'),
       // orderBy('sentAt', 'desc')
-    );
+    ) : null;
 
-    if (status) {
+    if (!q) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
+    if (status && q) {
       q = query(q, where('status', '==', status));
     }
 
-    const snapshot = await getDocs(q);
+    const snapshot = q ? await getDocs(q) : null;
+    if (!snapshot) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     const logs = snapshot.docs.slice(0, limit).map(doc => ({
       id: doc.id,
       ...doc.data(),

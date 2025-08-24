@@ -69,14 +69,14 @@ export async function POST(req: NextRequest) {
       scheduleAt: scheduleAt ? new Date(scheduleAt) : undefined
     };
 
-    const logRef = await addDoc(collection(db, 'emailNotificationLogs'), notificationLog);
+    const logRef = db ? await addDoc(collection(db, 'emailNotificationLogs'), notificationLog) : null;
 
     // 즉시 전송이 아닌 경우 (스케줄된 알림)
     if (scheduleAt && new Date(scheduleAt) > new Date()) {
       return NextResponse.json({
         success: true,
         message: '이메일 알림이 스케줄되었습니다.',
-        logId: logRef.id,
+        logId: logRef?.id || 'temp-log-id',
         scheduledFor: scheduleAt
       });
     }
@@ -97,31 +97,35 @@ export async function POST(req: NextRequest) {
       });
 
       // 로그 업데이트
-      await addDoc(collection(db, 'emailNotificationResults'), {
-        logId: logRef.id,
-        status: 'sent',
-        sentAt: new Date(),
-        emailProvider: 'sendgrid', // 또는 사용 중인 이메일 서비스
-        messageId: `email_${Date.now()}` // 실제 메시지 ID로 교체
-      });
+      if (db) {
+        await addDoc(collection(db, 'emailNotificationResults'), {
+          logId: logRef?.id || 'temp-log-id',
+          status: 'sent',
+          sentAt: new Date(),
+          emailProvider: 'sendgrid', // 또는 사용 중인 이메일 서비스
+          messageId: `email_${Date.now()}` // 실제 메시지 ID로 교체
+        });
+      }
 
       return NextResponse.json({
         success: true,
         message: '이메일 알림이 성공적으로 전송되었습니다.',
-        logId: logRef.id
+        logId: logRef?.id || 'temp-log-id'
       });
 
     } catch (emailError) {
       console.error('이메일 전송 실패:', emailError);
       
       // 실패 로그 업데이트
-      await addDoc(collection(db, 'emailNotificationResults'), {
-        logId: logRef.id,
-        status: 'failed',
-        failedAt: new Date(),
-        errorMessage: emailError instanceof Error ? emailError.message : '알 수 없는 오류',
-        retryCount: 1
-      });
+      if (db) {
+        await addDoc(collection(db, 'emailNotificationResults'), {
+          logId: logRef?.id || 'temp-log-id',
+          status: 'failed',
+          failedAt: new Date(),
+          errorMessage: emailError instanceof Error ? emailError.message : '알 수 없는 오류',
+          retryCount: 1
+        });
+      }
 
       return NextResponse.json(
         { error: '이메일 전송에 실패했습니다.' },
@@ -233,6 +237,14 @@ function getEmailTemplate(type: string, data: any): string {
 // 이메일 알림 로그 조회
 export async function GET(req: NextRequest) {
   try {
+    if (!db) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Database not configured',
+        logs: []
+      });
+    }
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const type = searchParams.get('type');

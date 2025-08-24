@@ -17,6 +17,10 @@ export async function uploadFile(
   onProgress?: (progress: number) => void
 ): Promise<string> {
   try {
+    if (!storage) {
+      throw new Error('Firebase Storage not configured');
+    }
+    
     const fileName = `${Date.now()}_${file.name}`;
     const filePath = `${path}/${fileName}`;
     const storageRef = ref(storage, filePath);
@@ -41,6 +45,10 @@ export async function uploadMultipleFiles(
   onProgress?: (progress: number, fileName?: string) => void
 ): Promise<FileUploadResult[]> {
   try {
+    if (!storage) {
+      throw new Error('Firebase Storage not configured');
+    }
+    
     const results: FileUploadResult[] = [];
     
     for (let i = 0; i < files.length; i++) {
@@ -91,6 +99,10 @@ export function validateFileType(file: File, allowedTypes: string[]): boolean {
 // 파일 삭제
 export async function deleteFile(filePath: string): Promise<void> {
   try {
+    if (!storage) {
+      throw new Error('Firebase Storage not configured');
+    }
+    
     const fileRef = ref(storage, filePath);
     await deleteObject(fileRef);
   } catch (error) {
@@ -102,6 +114,10 @@ export async function deleteFile(filePath: string): Promise<void> {
 // 폴더 내 모든 파일 삭제
 export async function deleteFolder(folderPath: string): Promise<void> {
   try {
+    if (!storage) {
+      throw new Error('Firebase Storage not configured');
+    }
+    
     const folderRef = ref(storage, folderPath);
     const result = await listAll(folderRef);
     

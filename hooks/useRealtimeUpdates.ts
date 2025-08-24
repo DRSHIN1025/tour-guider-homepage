@@ -52,7 +52,7 @@ export function useRealtimeUpdates() {
   const lastUpdateRef = useRef<{ [key: string]: any }>({});
 
   useEffect(() => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user || !db) return;
 
     const unsubscribes: (() => void)[] = [];
 

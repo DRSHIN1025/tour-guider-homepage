@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { uploadMultipleFiles, validateFileSize, validateFileType, FileUploadResult } from "@/lib/storage";
 import Link from "next/link";
 import { commonClasses } from "@/lib/design-system";

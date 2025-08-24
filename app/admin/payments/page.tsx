@@ -122,22 +122,33 @@ export default function AdminPaymentsPage() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const paymentsQuery = query(
-        collection(db, 'payments'),
-        orderBy('createdAt', 'desc'),
-        limit(20)
-      );
       
-      const paymentsSnapshot = await getDocs(paymentsQuery);
-      const paymentsData = paymentsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Payment[];
+      let paymentsData: Payment[] = [];
+      let paymentsSnapshot: any = null;
+      
+      if (db) {
+        // Firebase가 설정되어 있을 때
+        const paymentsQuery = query(
+          collection(db, 'payments'),
+          orderBy('createdAt', 'desc'),
+          limit(20)
+        );
+        
+        paymentsSnapshot = await getDocs(paymentsQuery);
+        paymentsData = paymentsSnapshot.docs.map((doc: any) => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Payment[];
+      } else {
+        // Firebase가 없을 때 임시 데이터 사용
+        const tempPayments = JSON.parse(localStorage.getItem('tempPayments') || '[]');
+        paymentsData = tempPayments;
+      }
       
       setPayments(paymentsData);
       setFilteredPayments(paymentsData);
       
-      if (paymentsData.length === 20) {
+      if (paymentsData.length === 20 && paymentsSnapshot) {
         setLastDoc(paymentsSnapshot.docs[paymentsSnapshot.docs.length - 1]);
         setHasMore(true);
       } else {
@@ -156,16 +167,25 @@ export default function AdminPaymentsPage() {
   // 환불 데이터 로드
   const fetchRefunds = async () => {
     try {
-      const refundsQuery = query(
-        collection(db, 'refunds'),
-        orderBy('createdAt', 'desc')
-      );
+      let refundsData: Refund[] = [];
       
-      const refundsSnapshot = await getDocs(refundsQuery);
-      const refundsData = refundsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Refund[];
+      if (db) {
+        // Firebase가 설정되어 있을 때
+        const refundsQuery = query(
+          collection(db, 'refunds'),
+          orderBy('createdAt', 'desc')
+        );
+        
+        const refundsSnapshot = await getDocs(refundsQuery);
+        refundsData = refundsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Refund[];
+      } else {
+        // Firebase가 없을 때 임시 데이터 사용
+        const tempRefunds = JSON.parse(localStorage.getItem('tempRefunds') || '[]');
+        refundsData = tempRefunds;
+      }
       
       setRefunds(refundsData);
     } catch (error) {
@@ -232,7 +252,7 @@ export default function AdminPaymentsPage() {
 
   // 더 많은 데이터 로드
   const loadMore = async () => {
-    if (!hasMore || !lastDoc) return;
+    if (!hasMore || !lastDoc || !db) return;
 
     try {
       const morePaymentsQuery = query(

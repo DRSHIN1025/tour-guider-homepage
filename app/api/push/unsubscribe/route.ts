@@ -10,6 +10,14 @@ interface UnsubscribeRequest {
 
 export async function DELETE(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const body: UnsubscribeRequest = await req.json();
     const { endpoint, userEmail, userId } = body;
 
@@ -21,20 +29,33 @@ export async function DELETE(req: NextRequest) {
     }
 
     // 구독 찾기
-    let q = query(
+    let q = db ? query(
       collection(db, 'pushSubscriptions'),
       where('endpoint', '==', endpoint)
-    );
+    ) : null;
 
-    if (userEmail) {
+    if (!q) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
+    if (userEmail && q) {
       q = query(q, where('userEmail', '==', userEmail));
     }
 
-    if (userId) {
+    if (userId && q) {
       q = query(q, where('userId', '==', userId));
     }
 
-    const snapshot = await getDocs(q);
+    const snapshot = q ? await getDocs(q) : null;
+    if (!snapshot) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     if (snapshot.empty) {
       return NextResponse.json(
@@ -47,11 +68,13 @@ export async function DELETE(req: NextRequest) {
     const docRef = snapshot.docs[0].ref;
     
     // 선택 1: 구독 비활성화 (데이터 보존)
-    await updateDoc(docRef, {
-      isActive: false,
-      updatedAt: new Date(),
-      unsubscribedAt: new Date(),
-    });
+    if (db) {
+      await updateDoc(docRef, {
+        isActive: false,
+        updatedAt: new Date(),
+        unsubscribedAt: new Date(),
+      });
+    }
 
     // 선택 2: 구독 완전 삭제 (데이터 영구 삭제)
     // await deleteDoc(docRef);
@@ -71,6 +94,14 @@ export async function DELETE(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const body: UnsubscribeRequest = await req.json();
     const { endpoint, userEmail, userId } = body;
 
@@ -82,20 +113,33 @@ export async function PATCH(req: NextRequest) {
     }
 
     // 구독 찾기
-    let q = query(
+    let q = db ? query(
       collection(db, 'pushSubscriptions'),
       where('endpoint', '==', endpoint)
-    );
+    ) : null;
 
-    if (userEmail) {
+    if (!q) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
+    if (userEmail && q) {
       q = query(q, where('userEmail', '==', userEmail));
     }
 
-    if (userId) {
+    if (userId && q) {
       q = query(q, where('userId', '==', userId));
     }
 
-    const snapshot = await getDocs(q);
+    const snapshot = q ? await getDocs(q) : null;
+    if (!snapshot) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     if (snapshot.empty) {
       return NextResponse.json(
@@ -106,11 +150,13 @@ export async function PATCH(req: NextRequest) {
 
     // 구독 재활성화
     const docRef = snapshot.docs[0].ref;
-    await updateDoc(docRef, {
-      isActive: true,
-      updatedAt: new Date(),
-      reactivatedAt: new Date(),
-    });
+    if (db) {
+      await updateDoc(docRef, {
+        isActive: true,
+        updatedAt: new Date(),
+        reactivatedAt: new Date(),
+      });
+    }
 
     return NextResponse.json({
       success: true,

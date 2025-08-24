@@ -14,6 +14,14 @@ interface PushSubscriptionRequest {
 
 export async function POST(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const body: PushSubscriptionRequest = await req.json();
     const { endpoint, keys, userEmail, userId } = body;
 
@@ -25,22 +33,31 @@ export async function POST(req: NextRequest) {
     }
 
     // 기존 구독 확인
-    const existingQuery = query(
+    const existingQuery = db ? query(
       collection(db, 'pushSubscriptions'),
       where('endpoint', '==', endpoint)
-    );
+    ) : null;
+    
+    if (!existingQuery) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     
     const existingDocs = await getDocs(existingQuery);
     
     if (!existingDocs.empty) {
       // 기존 구독 업데이트
       const docRef = existingDocs.docs[0].ref;
-      await updateDoc(docRef, {
-        keys,
-        userEmail,
-        userId,
-        updatedAt: new Date(),
-      });
+      if (db) {
+        await updateDoc(docRef, {
+          keys,
+          userEmail,
+          userId,
+          updatedAt: new Date(),
+        });
+      }
 
       return NextResponse.json({
         success: true,
@@ -49,7 +66,7 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // 새 구독 생성
-      const docRef = await addDoc(collection(db, 'pushSubscriptions'), {
+      const docRef = db ? await addDoc(collection(db, 'pushSubscriptions'), {
         endpoint,
         keys,
         userEmail,
@@ -57,7 +74,14 @@ export async function POST(req: NextRequest) {
         createdAt: new Date(),
         updatedAt: new Date(),
         isActive: true,
-      });
+      }) : null;
+
+      if (!docRef) {
+        return NextResponse.json(
+          { error: 'Database not configured' },
+          { status: 503 }
+        );
+      }
 
       return NextResponse.json({
         success: true,
@@ -76,24 +100,45 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const userEmail = searchParams.get('userEmail');
     const userId = searchParams.get('userId');
 
-    let q = query(
+    let q = db ? query(
       collection(db, 'pushSubscriptions'),
       where('isActive', '==', true)
-    );
+    ) : null;
 
-    if (userEmail) {
+    if (!q) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
+    if (userEmail && q) {
       q = query(q, where('userEmail', '==', userEmail));
     }
 
-    if (userId) {
+    if (userId && q) {
       q = query(q, where('userId', '==', userId));
     }
 
-    const snapshot = await getDocs(q);
+    const snapshot = q ? await getDocs(q) : null;
+    if (!snapshot) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     const subscriptions = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),

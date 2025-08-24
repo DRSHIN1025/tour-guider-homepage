@@ -16,6 +16,14 @@ const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, {
 
 export async function POST(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     // Stripe가 비활성화된 경우
     if (!stripe) {
       console.warn('Stripe 환불 기능이 비활성화되었습니다. 환경 변수를 확인하세요.');
@@ -35,7 +43,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 결제 정보 조회
-    const paymentDoc = await getDoc(doc(db, 'payments', paymentId));
+    const paymentDoc = db ? await getDoc(doc(db, 'payments', paymentId)) : null;
+    if (!paymentDoc) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     if (!paymentDoc.exists()) {
       return NextResponse.json(
         { error: '결제 정보를 찾을 수 없습니다.' },
@@ -112,20 +126,24 @@ export async function POST(req: NextRequest) {
       originalAmount: paymentData.amount,
     };
 
-    await addDoc(collection(db, 'refunds'), refundData);
+    if (db) {
+      await addDoc(collection(db, 'refunds'), refundData);
+    }
 
     // 결제 상태 업데이트
-    await updateDoc(doc(db, 'payments', paymentId), {
-      status: 'refunded',
-      refundedAt: new Date(),
-      updatedAt: new Date(),
-      refundAmount: amount,
-      refundReason: reason,
-      refundId: refund.id,
-    });
+    if (db) {
+      await updateDoc(doc(db, 'payments', paymentId), {
+        status: 'refunded',
+        refundedAt: new Date(),
+        updatedAt: new Date(),
+        refundAmount: amount,
+        refundReason: reason,
+        refundId: refund.id,
+      });
+    }
 
     // 견적 상태 업데이트 (metadata에 quoteId가 있는 경우)
-    if (paymentData.metadata?.quoteId) {
+    if (paymentData.metadata?.quoteId && db) {
       const quoteRef = doc(db, 'quotes', paymentData.metadata.quoteId);
       await updateDoc(quoteRef, {
         paymentStatus: 'refunded',
@@ -152,6 +170,14 @@ export async function POST(req: NextRequest) {
 // 부분 환불 처리
 export async function PATCH(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const { paymentId, amount, reason } = await req.json();
 
     if (!paymentId || !amount || !reason) {
@@ -162,7 +188,13 @@ export async function PATCH(req: NextRequest) {
     }
 
     // 결제 정보 조회
-    const paymentDoc = await getDoc(doc(db, 'payments', paymentId));
+    const paymentDoc = db ? await getDoc(doc(db, 'payments', paymentId)) : null;
+    if (!paymentDoc) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     if (!paymentDoc.exists()) {
       return NextResponse.json(
         { error: '결제 정보를 찾을 수 없습니다.' },
@@ -225,16 +257,20 @@ export async function PATCH(req: NextRequest) {
       originalAmount: paymentData.amount,
     };
 
-    await addDoc(collection(db, 'refunds'), refundData);
+    if (db) {
+      await addDoc(collection(db, 'refunds'), refundData);
+    }
 
     // 결제 상태를 부분 환불로 업데이트
-    await updateDoc(doc(db, 'payments', paymentId), {
-      status: 'partially_refunded',
-      updatedAt: new Date(),
-      refundAmount: (paymentData.refundAmount || 0) + amount,
-      refundReason: reason,
-      lastRefundId: refund.id,
-    });
+    if (db) {
+      await updateDoc(doc(db, 'payments', paymentId), {
+        status: 'partially_refunded',
+        updatedAt: new Date(),
+        refundAmount: (paymentData.refundAmount || 0) + amount,
+        refundReason: reason,
+        lastRefundId: refund.id,
+      });
+    }
 
     return NextResponse.json({
       success: true,

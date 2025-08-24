@@ -4,6 +4,14 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 
 export async function GET(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email');
 
@@ -15,14 +23,26 @@ export async function GET(req: NextRequest) {
     }
 
     // 사용자 견적 요청 조회
-    const quotesRef = collection(db, 'quotes');
+    const quotesRef = db ? collection(db, 'quotes') : null;
+    if (!quotesRef) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     const q = query(
       quotesRef,
       where('email', '==', email),
       orderBy('createdAt', 'desc')
     );
 
-    const snapshot = await getDocs(q);
+    const snapshot = q ? await getDocs(q) : null;
+    if (!snapshot) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
     const quotes = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),

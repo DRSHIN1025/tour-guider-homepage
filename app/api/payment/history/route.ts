@@ -18,6 +18,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    if (!db) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Database not configured',
+        payments: []
+      });
+    }
+
     // 쿼리 구성
     let q = query(
       collection(db, 'payments'),
@@ -83,6 +91,14 @@ export async function POST(req: NextRequest) {
         { error: '이메일이 필요합니다.' },
         { status: 400 }
       );
+    }
+
+    if (!db) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Database not configured',
+        stats: { totalAmount: 0, totalRefunds: 0, paymentCount: 0, refundCount: 0 }
+      });
     }
 
     // 기간별 필터링

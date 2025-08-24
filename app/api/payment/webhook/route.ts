@@ -21,6 +21,14 @@ const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, {
 
 export async function POST(req: NextRequest) {
   try {
+    // Firebase가 비활성화된 경우
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+
     // Stripe가 비활성화된 경우
     if (!stripe || !webhookSecret) {
       console.warn('Stripe 웹훅이 비활성화되었습니다. 환경 변수를 확인하세요.');
@@ -119,10 +127,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     };
 
     // 결제 내역 저장
-    await setDoc(doc(db, 'payments', session.id), paymentData);
+    if (db) {
+      await setDoc(doc(db, 'payments', session.id), paymentData);
+    }
 
     // 견적 상태 업데이트 (metadata에 quoteId가 있는 경우)
-    if (metadata?.quoteId) {
+    if (metadata?.quoteId && db) {
       const quoteRef = doc(db, 'quotes', metadata.quoteId);
       await updateDoc(quoteRef, {
         paymentStatus: 'paid',
@@ -141,13 +151,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 // 결제 의도 성공 처리
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   try {
-    const paymentRef = doc(db, 'payments', paymentIntent.metadata?.sessionId || paymentIntent.id);
-    await updateDoc(paymentRef, {
-      status: 'succeeded',
-      updatedAt: new Date(),
-      stripePaymentIntentId: paymentIntent.id,
-      paymentMethod: paymentIntent.payment_method_types?.[0] || 'unknown',
-    });
+    if (db) {
+      const paymentRef = doc(db, 'payments', paymentIntent.metadata?.sessionId || paymentIntent.id);
+      await updateDoc(paymentRef, {
+        status: 'succeeded',
+        updatedAt: new Date(),
+        stripePaymentIntentId: paymentIntent.id,
+        paymentMethod: paymentIntent.payment_method_types?.[0] || 'unknown',
+      });
+    }
 
     console.log('결제 의도 성공 처리됨:', paymentIntent.id);
   } catch (error) {
@@ -158,12 +170,14 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 // 결제 의도 실패 처리
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   try {
-    const paymentRef = doc(db, 'payments', paymentIntent.metadata?.sessionId || paymentIntent.id);
-    await updateDoc(paymentRef, {
-      status: 'failed',
-      updatedAt: new Date(),
-      failureReason: paymentIntent.last_payment_error?.message || '알 수 없는 오류',
-    });
+    if (db) {
+      const paymentRef = doc(db, 'payments', paymentIntent.metadata?.sessionId || paymentIntent.id);
+      await updateDoc(paymentRef, {
+        status: 'failed',
+        updatedAt: new Date(),
+        failureReason: paymentIntent.last_payment_error?.message || '알 수 없는 오류',
+      });
+    }
 
     console.log('결제 의도 실패 처리됨:', paymentIntent.id);
   } catch (error) {
@@ -174,27 +188,29 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
 // 환불 처리
 async function handleChargeRefunded(charge: Stripe.Charge) {
   try {
-    const paymentRef = doc(db, 'payments', charge.metadata?.sessionId || charge.payment_intent as string);
-    await updateDoc(paymentRef, {
-      status: 'refunded',
-      refundedAt: new Date(),
-      updatedAt: new Date(),
-      refundAmount: charge.amount_refunded,
-      refundReason: charge.metadata?.refundReason || '고객 요청',
-    });
+    if (db) {
+      const paymentRef = doc(db, 'payments', charge.metadata?.sessionId || charge.payment_intent as string);
+      await updateDoc(paymentRef, {
+        status: 'refunded',
+        refundedAt: new Date(),
+        updatedAt: new Date(),
+        refundAmount: charge.amount_refunded,
+        refundReason: charge.metadata?.refundReason || '고객 요청',
+      });
 
-    // 환불 내역 저장
-    const refundData = {
-      id: charge.id,
-      paymentId: charge.metadata?.sessionId || charge.payment_intent,
-      amount: charge.amount_refunded,
-      currency: charge.currency,
-      reason: charge.metadata?.refundReason || '고객 요청',
-      createdAt: new Date(),
-      stripeRefundId: charge.id,
-    };
+      // 환불 내역 저장
+      const refundData = {
+        id: charge.id,
+        paymentId: charge.metadata?.sessionId || charge.payment_intent,
+        amount: charge.amount_refunded,
+        currency: charge.currency,
+        reason: charge.metadata?.refundReason || '고객 요청',
+        createdAt: new Date(),
+        stripeRefundId: charge.id,
+      };
 
-    await addDoc(collection(db, 'refunds'), refundData);
+      await addDoc(collection(db, 'refunds'), refundData);
+    }
 
     console.log('환불 처리됨:', charge.id);
   } catch (error) {

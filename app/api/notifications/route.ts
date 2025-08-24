@@ -28,11 +28,11 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     };
 
-    const docRef = await addDoc(collection(db, 'notifications'), notificationData);
+    const docRef = db ? await addDoc(collection(db, 'notifications'), notificationData) : null;
     
     return NextResponse.json({
       success: true,
-      id: docRef.id,
+      id: docRef?.id || 'temp-notification-id',
       message: '알림이 생성되었습니다.',
     });
   } catch (error) {
@@ -51,6 +51,14 @@ export async function GET(req: NextRequest) {
     const userEmail = searchParams.get('userEmail');
     const isRead = searchParams.get('isRead');
     const limit = parseInt(searchParams.get('limit') || '50');
+
+    if (!db) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Database not configured',
+        notifications: []
+      });
+    }
 
     let q = query(
       collection(db, 'notifications'),
@@ -99,10 +107,12 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    await updateDoc(doc(db, 'notifications', id), {
-      isRead: isRead !== undefined ? isRead : true,
-      updatedAt: new Date(),
-    });
+    if (db) {
+      await updateDoc(doc(db, 'notifications', id), {
+        isRead: isRead !== undefined ? isRead : true,
+        updatedAt: new Date(),
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -130,7 +140,9 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await deleteDoc(doc(db, 'notifications', id));
+    if (db) {
+      await deleteDoc(doc(db, 'notifications', id));
+    }
 
     return NextResponse.json({
       success: true,

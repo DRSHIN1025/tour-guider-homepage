@@ -62,6 +62,11 @@ export const generateReferralCode = (userId: string): string => {
  */
 export const validateReferralCode = async (code: string): Promise<ReferralUser | null> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, referral validation skipped');
+      return null;
+    }
+    
     // users 컬렉션에서 해당 레퍼럴 코드를 가진 사용자 조회
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('referralCode', '==', code));
@@ -95,6 +100,11 @@ export const createReferralRelationship = async (
   referredUserEmail: string
 ): Promise<string | null> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, referral relationship creation skipped');
+      return null;
+    }
+    
     const referralData = {
       referrerId,
       referrerName,
@@ -125,6 +135,11 @@ export const createReferralRelationship = async (
  */
 export const updateReferralCount = async (userId: string, increment: number): Promise<void> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, referral count update skipped');
+      return;
+    }
+    
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
     
@@ -145,6 +160,18 @@ export const updateReferralCount = async (userId: string, increment: number): Pr
  */
 export const getUserReferralStats = async (userId: string): Promise<ReferralStats> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, returning default referral stats');
+      return {
+        totalReferrals: 0,
+        successfulReferrals: 0,
+        pendingReferrals: 0,
+        totalEarnings: 0,
+        pendingEarnings: 0,
+        level: 'bronze'
+      };
+    }
+    
     const referralsRef = collection(db, 'referrals');
     const q = query(referralsRef, where('referrerId', '==', userId));
     const querySnapshot = await getDocs(q);
@@ -202,6 +229,11 @@ export const getUserReferralStats = async (userId: string): Promise<ReferralStat
  */
 export const getUserReferrals = async (userId: string): Promise<ReferralRelationship[]> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, returning empty referrals list');
+      return [];
+    }
+    
     const referralsRef = collection(db, 'referrals');
     const q = query(
       referralsRef, 
@@ -229,6 +261,11 @@ export const updateReferralStatus = async (
   earnings?: number
 ): Promise<boolean> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, referral status update skipped');
+      return false;
+    }
+    
     const referralRef = doc(db, 'referrals', referralId);
     const updateData: any = {
       status,
@@ -285,6 +322,11 @@ export const calculateDiscountRate = (level: 'bronze' | 'silver' | 'gold'): numb
  */
 export const isReferralCodeUnique = async (code: string): Promise<boolean> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, referral code uniqueness check skipped');
+      return false;
+    }
+    
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('referralCode', '==', code));
     const querySnapshot = await getDocs(q);
@@ -301,6 +343,11 @@ export const isReferralCodeUnique = async (code: string): Promise<boolean> => {
  */
 export const assignReferralCodeToUser = async (userId: string): Promise<string | null> => {
   try {
+    if (!db) {
+      console.warn('Firebase not configured, referral code assignment skipped');
+      return null;
+    }
+    
     let referralCode: string = '';
     let isUnique = false;
     let attempts = 0;

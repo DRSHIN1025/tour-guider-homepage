@@ -166,11 +166,23 @@ export default function ModernAdminPage() {
 
   const handleStatusUpdate = async (quoteId: string, newStatus: string) => {
     try {
-      const quoteRef = doc(db, 'quotes', quoteId);
-      await updateDoc(quoteRef, {
-        status: newStatus,
-        updatedAt: new Date()
-      });
+      if (db) {
+        // Firebase가 설정되어 있을 때
+        const quoteRef = doc(db, 'quotes', quoteId);
+        await updateDoc(quoteRef, {
+          status: newStatus,
+          updatedAt: new Date()
+        });
+      } else {
+        // Firebase가 없을 때 로컬 데이터 업데이트
+        const tempQuotes = JSON.parse(localStorage.getItem('tempQuotes') || '[]');
+        const updatedQuotes = tempQuotes.map((quote: any) => 
+          quote.id === quoteId 
+            ? { ...quote, status: newStatus, updatedAt: new Date().toISOString() }
+            : quote
+        );
+        localStorage.setItem('tempQuotes', JSON.stringify(updatedQuotes));
+      }
       
       // 견적 승인 시 이메일 알림 전송
       if (newStatus === 'approved') {
@@ -199,8 +211,16 @@ export default function ModernAdminPage() {
   const handleDeleteQuote = async (quoteId: string) => {
     if (confirm('정말로 이 견적 요청을 삭제하시겠습니까?')) {
       try {
-        const quoteRef = doc(db, 'quotes', quoteId);
-        await deleteDoc(quoteRef);
+        if (db) {
+          // Firebase가 설정되어 있을 때
+          const quoteRef = doc(db, 'quotes', quoteId);
+          await deleteDoc(quoteRef);
+        } else {
+          // Firebase가 없을 때 로컬 데이터에서 삭제
+          const tempQuotes = JSON.parse(localStorage.getItem('tempQuotes') || '[]');
+          const filteredQuotes = tempQuotes.filter((quote: any) => quote.id !== quoteId);
+          localStorage.setItem('tempQuotes', JSON.stringify(filteredQuotes));
+        }
         
         // 삭제 후 목록 새로고침
         fetchQuotes();
@@ -216,12 +236,29 @@ export default function ModernAdminPage() {
     }
 
     try {
-      const quoteRef = doc(db, 'quotes', quoteId);
-      await updateDoc(quoteRef, {
-        response: responseText,
-        responseAt: new Date(),
-        status: 'responded'
-      });
+      if (db) {
+        // Firebase가 설정되어 있을 때
+        const quoteRef = doc(db, 'quotes', quoteId);
+        await updateDoc(quoteRef, {
+          response: responseText,
+          responseAt: new Date(),
+          status: 'responded'
+        });
+      } else {
+        // Firebase가 없을 때 로컬 데이터 업데이트
+        const tempQuotes = JSON.parse(localStorage.getItem('tempQuotes') || '[]');
+        const updatedQuotes = tempQuotes.map((quote: any) => 
+          quote.id === quoteId 
+            ? { 
+                ...quote, 
+                response: responseText, 
+                responseAt: new Date().toISOString(), 
+                status: 'responded' 
+              }
+            : quote
+        );
+        localStorage.setItem('tempQuotes', JSON.stringify(updatedQuotes));
+      }
       
       // 응답 제출 후 입력 필드 초기화
       setResponseText('');
@@ -246,7 +283,7 @@ export default function ModernAdminPage() {
       let firebaseUrl = file.url || (file as any).url || (file as any).downloadURL;
       
       // URL이 없으면 path로 Firebase에서 URL 생성
-      if (!firebaseUrl && file.path) {
+      if (!firebaseUrl && file.path && storage) {
         try {
           const storageRef = ref(storage, file.path);
           firebaseUrl = await getDownloadURL(storageRef);
@@ -388,7 +425,7 @@ export default function ModernAdminPage() {
       let previewUrl = file.url || (file as any).url || (file as any).downloadURL;
       
       // URL이 없으면 path로 Firebase에서 URL 생성
-      if (!previewUrl && file.path) {
+      if (!previewUrl && file.path && storage) {
         try {
           const storageRef = ref(storage, file.path);
           previewUrl = await getDownloadURL(storageRef);

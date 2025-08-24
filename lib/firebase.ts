@@ -65,17 +65,17 @@ if (typeof window !== 'undefined') {
 if (process.env.NODE_ENV === 'development') {
   try {
     // Firestore 에뮬레이터
-    if (process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST) {
+    if (process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST && db) {
       connectFirestoreEmulator(db, 'localhost', 8080);
     }
     
     // Storage 에뮬레이터
-    if (process.env.NEXT_PUBLIC_STORAGE_EMULATOR_HOST) {
+    if (process.env.NEXT_PUBLIC_STORAGE_EMULATOR_HOST && storage) {
       connectStorageEmulator(storage, 'localhost', 9199);
     }
     
     // Auth 에뮬레이터
-    if (process.env.NEXT_PUBLIC_AUTH_EMULATOR_HOST) {
+    if (process.env.NEXT_PUBLIC_AUTH_EMULATOR_HOST && auth) {
       connectAuthEmulator(auth, 'http://localhost:9099');
     }
   } catch (error) {

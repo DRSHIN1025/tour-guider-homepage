@@ -62,12 +62,19 @@ export default function ReviewsPage() {
 
   const fetchReviews = async () => {
     try {
-      const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'))
-      const querySnapshot = await getDocs(q)
-      const reviewsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Review[]
+      let reviewsData: Review[] = []
+      
+      if (db) {
+        const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'))
+        const querySnapshot = await getDocs(q)
+        reviewsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Review[]
+      } else {
+        // Firebase가 없을 때 임시 데이터 또는 빈 배열
+        reviewsData = []
+      }
       
       setReviews(reviewsData)
     } catch (error) {
@@ -99,12 +106,20 @@ export default function ReviewsPage() {
         userId: user.uid,
         userName: user.displayName || user.email?.split('@')[0] || '익명',
         userEmail: user.email,
-        createdAt: serverTimestamp()
+        createdAt: db ? serverTimestamp() : new Date().toISOString()
       }
 
-      await addDoc(collection(db, 'reviews'), reviewData)
-      
-      toast.success('리뷰가 성공적으로 등록되었습니다!')
+      if (db) {
+        await addDoc(collection(db, 'reviews'), reviewData)
+        toast.success('리뷰가 성공적으로 등록되었습니다!')
+      } else {
+        // Firebase가 없을 때 로컬 저장소에 임시 저장
+        const tempReviews = JSON.parse(localStorage.getItem('tempReviews') || '[]')
+        const newReview = { ...reviewData, id: `temp_${Date.now()}`, createdAt: new Date().toISOString() }
+        tempReviews.push(newReview)
+        localStorage.setItem('tempReviews', JSON.stringify(tempReviews))
+        toast.success('리뷰가 임시 저장되었습니다!')
+      }
       setIsDialogOpen(false)
       setFormData({
         destination: '',
