@@ -96,7 +96,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//firebasestorage.googleapis.com" />
         <link rel="dns-prefetch" href="//googleapis.com" />
       </head>
-      <body className={`${inter.className} ${notoSansKR.className}`}>
+      <body className={`${inter.className} ${notoSansKR.className}`} style={{fontFamily: 'Noto Sans KR, Inter, sans-serif'}}>
         {/* Structured Data */}
         <script
           type="application/ld+json"

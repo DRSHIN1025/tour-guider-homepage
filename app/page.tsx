@@ -1,5 +1,7 @@
 'use client';
 
+// Updated: 2025-01-24 - Removed development test buttons and added Korean font support
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
