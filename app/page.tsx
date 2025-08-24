@@ -94,21 +94,6 @@ export default function HomePage() {
     }
   };
 
-  const handlePushNotificationTest = () => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-      navigator.serviceWorker.ready.then(registration => {
-        registration.showNotification('푸시 알림 테스트', {
-          body: '브라우저 푸시 알림이 정상적으로 작동합니다!',
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-          tag: 'test-push',
-          requireInteraction: true
-        });
-      });
-    } else {
-      alert('이 브라우저는 푸시 알림을 지원하지 않습니다.');
-    }
-  };
 
   // 서버 사이드 렌더링 시 기본 UI만 표시
   if (!isClient) {
@@ -259,57 +244,6 @@ export default function HomePage() {
                 
               </div>
               
-              {/* 알림 테스트 버튼 (개발용) */}
-              {authState.isAuthenticated && (
-                <div className="flex justify-center space-x-4">
-                  <Button 
-                    onClick={() => notificationState.success('테스트 성공', '알림 시스템이 정상 작동합니다!')}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                  >
-                    성공 알림 테스트
-                  </Button>
-                  <Button 
-                    onClick={() => notificationState.error('테스트 오류', '오류 알림 테스트입니다.')}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                  >
-                    오류 알림 테스트
-                  </Button>
-                  <Button 
-                    onClick={() => notificationState.warning('테스트 경고', '경고 알림 테스트입니다.')}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                  >
-                    경고 알림 테스트
-                  </Button>
-                  <Button 
-                    onClick={() => notificationState.info('테스트 정보', '정보 알림 테스트입니다.')}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
-                  >
-                    정보 알림 테스트
-                  </Button>
-                </div>
-              )}
-
-              {/* 푸시 알림 테스트 버튼 */}
-              {authState.isAuthenticated && (
-                <div className="flex justify-center mt-4">
-                  <Button 
-                    onClick={handlePushNotificationTest}
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-500/20 backdrop-blur-sm border-purple-300/30 text-purple-200 hover:bg-purple-500/30"
-                  >
-                    푸시 알림 테스트
-                  </Button>
-                </div>
-              )}
             </div>
 
             {/* Stats */}
