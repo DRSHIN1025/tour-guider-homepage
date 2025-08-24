@@ -172,10 +172,16 @@ export default function QuotePage() {
         existingQuotes.push(tempQuoteData);
         localStorage.setItem('tempQuotes', JSON.stringify(existingQuotes));
         
-        toast.success('견적 요청이 임시 저장되었습니다. (Firebase 설정 후 정상 처리됩니다)');
+        // 어드민 페이지에 변경사항 알리기 위한 커스텀 이벤트 발생
+        window.dispatchEvent(new Event('localStorageChange'));
+        
+        console.log('✅ 견적 데이터가 localStorage에 저장됨:', tempQuoteData);
+        console.log('📱 저장된 총 견적 수:', existingQuotes.length);
+        
+        toast.success('견적 요청이 성공적으로 제출되었습니다! (데모 모드)');
+      } else {
+        toast.success('견적 요청이 성공적으로 제출되었습니다!');
       }
-      
-      toast.success('견적 요청이 성공적으로 제출되었습니다!');
       setSubmitted(true);
     } catch (error) {
       console.error('견적 요청 실패:', error);

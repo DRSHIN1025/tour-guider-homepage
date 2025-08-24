@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Noto_Sans_KR } from 'next/font/google'
 import './globals.css'
 import { Suspense, lazy } from 'react'
 
@@ -8,6 +8,10 @@ const PWAInstaller = lazy(() => import('@/components/PWAInstaller'))
 const NotificationContainer = lazy(() => import('@/components/NotificationContainer'))
 
 const inter = Inter({ subsets: ['latin'] })
+const notoSansKR = Noto_Sans_KR({ 
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700', '900']
+})
 
 export const metadata: Metadata = {
   title: 'K-BIZ TRAVEL - 동남아 특화 맞춤여행',
@@ -92,7 +96,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//firebasestorage.googleapis.com" />
         <link rel="dns-prefetch" href="//googleapis.com" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${notoSansKR.className}`}>
         {/* Structured Data */}
         <script
           type="application/ld+json"

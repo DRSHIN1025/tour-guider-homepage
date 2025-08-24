@@ -110,6 +110,38 @@ export default function ModernAdminPage() {
     filterQuotes();
   }, [quotes, filter, searchTerm]);
 
+  // localStorage 변경 감지 (새로운 견적 요청 실시간 반영)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tempQuotes') {
+        console.log('📱 새로운 견적 요청이 감지되었습니다. 목록을 새로고침합니다.');
+        fetchQuotes();
+      }
+    };
+
+    // 같은 브라우저 내에서 localStorage 변경 감지를 위한 커스텀 이벤트
+    const handleCustomStorageChange = () => {
+      console.log('🔄 견적 목록을 새로고침합니다.');
+      fetchQuotes();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('localStorageChange', handleCustomStorageChange);
+
+    // 10초마다 자동 새로고침 (데모 모드에서만)
+    const autoRefreshInterval = setInterval(() => {
+      if (!db) { // Firebase가 없을 때만 자동 새로고침
+        fetchQuotes();
+      }
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('localStorageChange', handleCustomStorageChange);
+      clearInterval(autoRefreshInterval);
+    };
+  }, [db]);
+
   const fetchQuotes = async () => {
     try {
       let quotesData: Quote[] = [];

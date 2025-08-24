@@ -682,7 +682,7 @@ export default function HomePage() {
             </Card>
           </div>
 
-          <div className="text-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link href="/quote">
               <Button
                 size="lg"
@@ -691,6 +691,16 @@ export default function HomePage() {
                 <Sparkles className="mr-4 w-8 h-8" />
                 지금 바로 무료 견적 받기
                 <ArrowRight className="ml-4 w-8 h-8" />
+              </Button>
+            </Link>
+            <Link href="/payment">
+              <Button
+                size="lg"
+                className="px-16 py-6 text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+              >
+                <ArrowRight className="mr-4 w-8 h-8" />
+                바로 결제하기
+                <Sparkles className="ml-4 w-8 h-8" />
               </Button>
             </Link>
           </div>
